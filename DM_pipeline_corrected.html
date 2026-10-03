@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrected Smart IT Incident Decision Support Architecture</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            max-width: 230mm;
+            margin: 0 auto;
+            padding: 15mm;
+            background-color: #f1f5f9;
+        }
+        .container {
+            background: #ffffff;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        h1 {
+            text-align: center;
+            color: #0f172a;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 14px;
+            font-size: 26px;
+            margin-top: 0;
+            letter-spacing: -0.5px;
+        }
+        .badge-bar {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .badge {
+            display: inline-block;
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 5px 14px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 600;
+            margin: 3px 6px;
+            border: 1px solid #bfdbfe;
+        }
+        .badge.target {
+            background: #fef2f2;
+            color: #b91c1c;
+            border-color: #fecaca;
+        }
+        .badge.success {
+            background: #ecfdf5;
+            color: #047857;
+            border-color: #a7f3d0;
+        }
+        h2 {
+            color: #1e3a8a;
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+        h3 {
+            color: #1e293b;
+            font-size: 16px;
+            margin-top: 15px;
+            margin-bottom: 6px;
+        }
+        .diagram-wrapper {
+            width: 100%;
+            margin: 25px 0;
+            text-align: center;
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 15px;
+            box-sizing: border-box;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+            overflow-x: auto;
+        }
+        .diagram-wrapper svg {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .phase-card {
+            background: #f8fafc;
+            border-left: 5px solid #3b82f6;
+            padding: 18px 24px;
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
+            border-top: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .phase-card.p1 { border-left-color: #475569; }
+        .phase-card.p2 { border-left-color: #9333ea; }
+        .phase-card.p3 { border-left-color: #16a34a; }
+        .phase-card.p4 { border-left-color: #d97706; }
+        .phase-card.p5 { border-left-color: #e11d48; }
+        ul {
+            margin-top: 6px;
+            padding-left: 22px;
+        }
+        li {
+            margin-bottom: 7px;
+        }
+        strong {
+            color: #0f172a;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 12px 14px;
+            border: 1px solid #cbd5e0;
+            text-align: left;
+        }
+        th {
+            background: #f1f5f9;
+            color: #1e293b;
+            font-weight: 700;
+        }
+        tr:nth-child(even) {
+            background: #f8fafc;
+        }
+        .issue-tag {
+            display: inline-block;
+            background: #fee2e2;
+            color: #991b1b;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        .fix-tag {
+            display: inline-block;
+            background: #dcfce7;
+            color: #166534;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        @media print {
+            body {
+                padding: 0;
+                background: #fff;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Corrected Smart IT Incident Decision Support Architecture</h1>
+    <div class="badge-bar">
+        <span class="badge">Dataset: ServiceNow Event Log (141,712 Rows / 24,918 Cases)</span>
+        <span class="badge target">SLA Breach Rate: 36.6% (9,115 Cases)</span>
+        <span class="badge success">Pure SVG Embedded (Zero Script Dependencies)</span>
+    </div>
+
+    <h2>1. End-to-End Visual Architecture Diagram</h2>
+    <p style="color: #475569; font-size: 14px; margin-bottom: 12px;">
+        <em>The diagram below is rendered directly in pure SVG (no JavaScript or external CDN needed). It works 100% offline, on local file paths (<code>file:///</code>), and prints cleanly.</em>
+    </p>
+
+    <div class="diagram-wrapper">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 835" width="100%" height="100%" style="background: #ffffff; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.06" />
+    </filter>
+    <marker id="arr-gray" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b" />
+    </marker>
+    <marker id="arr-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#7c3aed" />
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#16a34a" />
+    </marker>
+    <marker id="arr-orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#d97706" />
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#e11d48" />
+    </marker>
+  </defs>
+
+  <!-- ==================== 1. PHASE 1 ==================== -->
+  <rect x="30" y="15" width="760" height="105" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+  <rect x="30" y="15" width="760" height="28" rx="8" fill="#1e293b" />
+  <rect x="30" y="33" width="760" height="10" fill="#1e293b" />
+  <text x="45" y="34" fill="#ffffff" font-size="12" font-weight="700" letter-spacing="0.5">PHASE 1: DATA INGESTION &amp; DUAL STRUCTURING</text>
+
+  <g filter="url(#shadow)">
+    <rect x="45" y="53" width="205" height="55" rx="6" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2" />
+    <text x="147" y="75" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="700">Raw Event Log</text>
+    <text x="147" y="92" text-anchor="middle" fill="#64748b" font-size="10.5">141k rows | 25k cases</text>
+  </g>
+  <line x1="250" y1="80" x2="272" y2="80" stroke="#64748b" stroke-width="2" marker-end="url(#arr-gray)" />
+
+  <g filter="url(#shadow)">
+    <rect x="275" y="53" width="215" height="55" rx="6" fill="#f1f5f9" stroke="#64748b" stroke-width="1.2" />
+    <text x="382" y="75" text-anchor="middle" fill="#1e293b" font-size="12" font-weight="700">Data Cleaning</text>
+    <text x="382" y="92" text-anchor="middle" fill="#475569" font-size="10.5">Replace '?' | Parse Dates</text>
+  </g>
+  <line x1="490" y1="80" x2="512" y2="80" stroke="#64748b" stroke-width="2" marker-end="url(#arr-gray)" />
+
+  <g filter="url(#shadow)">
+    <rect x="515" y="53" width="260" height="55" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" />
+    <text x="645" y="75" text-anchor="middle" fill="#1d4ed8" font-size="12" font-weight="700">Dual Stream Separation</text>
+    <text x="645" y="92" text-anchor="middle" fill="#2563eb" font-size="10.5">Stream A (Traces) + Stream B (Intake)</text>
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <line x1="410" y1="120" x2="410" y2="140" stroke="#7c3aed" stroke-width="2" marker-end="url(#arr-purple)" />
+
+  <!-- ==================== 2. PHASE 2 ==================== -->
+  <rect x="30" y="142" width="760" height="95" rx="8" fill="#faf5ff" stroke="#c084fc" stroke-width="1.5" />
+  <rect x="30" y="142" width="760" height="28" rx="8" fill="#6b21a8" />
+  <rect x="30" y="160" width="760" height="10" fill="#6b21a8" />
+  <text x="45" y="161" fill="#ffffff" font-size="12" font-weight="700" letter-spacing="0.5">PHASE 2: GLOBAL PROCESS MINING &amp; WORKFLOW BOTTLENECKS</text>
+
+  <g filter="url(#shadow)">
+    <rect x="45" y="178" width="215" height="48" rx="6" fill="#ffffff" stroke="#c084fc" stroke-width="1.2" />
+    <text x="152" y="198" text-anchor="middle" fill="#581c87" font-size="11.5" font-weight="700">Process Discovery</text>
+    <text x="152" y="214" text-anchor="middle" fill="#7e22ce" font-size="10.5">Directly-Follows Graphs (DFG)</text>
+  </g>
+  <line x1="260" y1="202" x2="282" y2="202" stroke="#7c3aed" stroke-width="2" marker-end="url(#arr-purple)" />
+
+  <g filter="url(#shadow)">
+    <rect x="285" y="178" width="225" height="48" rx="6" fill="#ffffff" stroke="#c084fc" stroke-width="1.2" />
+    <text x="397" y="198" text-anchor="middle" fill="#581c87" font-size="11.5" font-weight="700">Bottleneck Detection</text>
+    <text x="397" y="214" text-anchor="middle" fill="#7e22ce" font-size="10.5">Ping-Pong Loops &amp; Wait Lags</text>
+  </g>
+  <line x1="510" y1="202" x2="532" y2="202" stroke="#7c3aed" stroke-width="2" marker-end="url(#arr-purple)" />
+
+  <g filter="url(#shadow)">
+    <rect x="535" y="178" width="240" height="48" rx="6" fill="#f5d0fe" stroke="#a21caf" stroke-width="1.5" />
+    <text x="655" y="198" text-anchor="middle" fill="#4a044e" font-size="11.5" font-weight="700">Engineered Trace Features</text>
+    <text x="655" y="214" text-anchor="middle" fill="#701a75" font-size="10.5">Handoff count, Dwell hours, Hops</text>
+  </g>
+
+  <!-- Arrow 2 -> 3 -->
+  <line x1="410" y1="237" x2="410" y2="257" stroke="#16a34a" stroke-width="2" marker-end="url(#arr-green)" />
+
+  <!-- ==================== 3. PHASE 3 ==================== -->
+  <rect x="30" y="260" width="760" height="115" rx="8" fill="#f0fdf4" stroke="#4ade80" stroke-width="1.5" />
+  <rect x="30" y="260" width="760" height="28" rx="8" fill="#15803d" />
+  <rect x="30" y="278" width="760" height="10" fill="#15803d" />
+  <text x="45" y="279" fill="#ffffff" font-size="12" font-weight="700" letter-spacing="0.5">PHASE 3: CASE FEATURE STORE, ANOMALY PROFILING &amp; CLUSTERING</text>
+
+  <g filter="url(#shadow)">
+    <rect x="160" y="295" width="500" height="30" rx="5" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5" />
+    <text x="410" y="315" text-anchor="middle" fill="#14532d" font-size="12" font-weight="800">Unified Case Feature Store (Intake Attributes + Extracted Process Metrics)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="45" y="332" width="345" height="34" rx="5" fill="#fff7ed" stroke="#f97316" stroke-width="1.2" />
+    <text x="217" y="353" text-anchor="middle" fill="#9a3412" font-size="11" font-weight="700">Isolation Forest: Profiles Extreme Failures (Retained!)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="430" y="332" width="345" height="34" rx="5" fill="#ffffff" stroke="#22c55e" stroke-width="1.2" />
+    <text x="602" y="353" text-anchor="middle" fill="#166534" font-size="11" font-weight="700">K-Prototypes: Segments Workload Archetypes</text>
+  </g>
+
+  <!-- Branch lines 3 -> 4 & 5 -->
+  <path d="M 217 366 L 217 392" fill="none" stroke="#d97706" stroke-width="2" marker-end="url(#arr-orange)" />
+  <path d="M 602 366 L 602 392" fill="none" stroke="#e11d48" stroke-width="2" marker-end="url(#arr-red)" />
+
+  <!-- ==================== 4. SPLIT: PHASE 4 & PHASE 5 ==================== -->
+  <!-- Phase 4 (Left) -->
+  <rect x="30" y="395" width="365" height="175" rx="8" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5" />
+  <rect x="30" y="395" width="365" height="26" rx="8" fill="#92400e" />
+  <rect x="30" y="411" width="365" height="10" fill="#92400e" />
+  <text x="45" y="413" fill="#ffffff" font-size="11.5" font-weight="700" letter-spacing="0.5">PHASE 4: ROOT-CAUSE RULE MINING</text>
+
+  <g filter="url(#shadow)">
+    <rect x="45" y="428" width="335" height="34" rx="5" fill="#ffffff" stroke="#f59e0b" stroke-width="1" />
+    <text x="212" y="449" text-anchor="middle" fill="#78350f" font-size="11" font-weight="700">Discretization: Bins Handoffs, Wait Times</text>
+  </g>
+  <line x1="212" y1="462" x2="212" y2="472" stroke="#d97706" stroke-width="1.5" marker-end="url(#arr-orange)" />
+
+  <g filter="url(#shadow)">
+    <rect x="45" y="474" width="335" height="34" rx="5" fill="#ffffff" stroke="#f59e0b" stroke-width="1" />
+    <text x="212" y="495" text-anchor="middle" fill="#78350f" font-size="11" font-weight="700">FP-Growth: Frequent Failure Itemsets</text>
+  </g>
+  <line x1="212" y1="508" x2="212" y2="518" stroke="#d97706" stroke-width="1.5" marker-end="url(#arr-orange)" />
+
+  <g filter="url(#shadow)">
+    <rect x="45" y="520" width="335" height="42" rx="5" fill="#fef3c7" stroke="#d97706" stroke-width="1.5" />
+    <text x="212" y="537" text-anchor="middle" fill="#451a03" font-size="11" font-weight="700">Symbolic Knowledge Rules</text>
+    <text x="212" y="552" text-anchor="middle" fill="#78350f" font-size="9.8">IF {Category X &amp; Handoffs &gt; 2} =&gt; {SLA Breach 88%}</text>
+  </g>
+
+  <!-- Phase 5 (Right) -->
+  <rect x="425" y="395" width="365" height="175" rx="8" fill="#fff1f2" stroke="#f43f5e" stroke-width="1.5" />
+  <rect x="425" y="395" width="365" height="26" rx="8" fill="#9f1239" />
+  <rect x="425" y="411" width="365" height="10" fill="#9f1239" />
+  <text x="440" y="413" fill="#ffffff" font-size="11.5" font-weight="700" letter-spacing="0.5">PHASE 5: PREDICTIVE ANALYTICS (ML)</text>
+
+  <g filter="url(#shadow)">
+    <rect x="440" y="428" width="335" height="34" rx="5" fill="#ffffff" stroke="#fb7185" stroke-width="1" />
+    <text x="607" y="449" text-anchor="middle" fill="#881337" font-size="11" font-weight="700">Strict Temporal Split (No Lookahead Leakage)</text>
+  </g>
+  <line x1="607" y1="462" x2="607" y2="472" stroke="#e11d48" stroke-width="1.5" marker-end="url(#arr-red)" />
+
+  <g filter="url(#shadow)">
+    <rect x="440" y="474" width="335" height="34" rx="5" fill="#ffffff" stroke="#fb7185" stroke-width="1" />
+    <text x="607" y="495" text-anchor="middle" fill="#881337" font-size="11" font-weight="700">LightGBM / XGBoost Ensemble + SHAP</text>
+  </g>
+  <line x1="607" y1="508" x2="607" y2="518" stroke="#e11d48" stroke-width="1.5" marker-end="url(#arr-red)" />
+
+  <g filter="url(#shadow)">
+    <rect x="440" y="520" width="335" height="42" rx="5" fill="#ffe4e6" stroke="#e11d48" stroke-width="1.5" />
+    <text x="607" y="537" text-anchor="middle" fill="#4c0519" font-size="11" font-weight="700">Multi-Stage Inference Services</text>
+    <text x="607" y="552" text-anchor="middle" fill="#881337" font-size="9.8">1. Intake Breach Classifier | 2. Smart Routing Recommender</text>
+  </g>
+
+  <!-- Convergence to Dashboard -->
+  <path d="M 212 570 L 212 590 L 310 590 L 310 600" fill="none" stroke="#d97706" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arr-orange)" />
+  <path d="M 607 570 L 607 590 L 510 590 L 510 600" fill="none" stroke="#e11d48" stroke-width="2" marker-end="url(#arr-red)" />
+
+  <!-- ==================== 5. DASHBOARD ==================== -->
+  <rect x="30" y="603" width="760" height="155" rx="8" fill="#ecfdf5" stroke="#10b981" stroke-width="2" />
+  <rect x="30" y="603" width="760" height="28" rx="8" fill="#065f46" />
+  <rect x="30" y="621" width="760" height="10" fill="#065f46" />
+  <text x="45" y="622" fill="#ffffff" font-size="12" font-weight="700" letter-spacing="0.5">OPERATIONAL DECISION SUPPORT: DISPATCHER &amp; MANAGER DASHBOARD</text>
+
+  <g filter="url(#shadow)">
+    <rect x="45" y="639" width="230" height="110" rx="5" fill="#ffffff" stroke="#059669" stroke-width="1.2" />
+    <rect x="45" y="639" width="230" height="22" rx="5" fill="#10b981" />
+    <rect x="45" y="656" width="230" height="5" fill="#10b981" />
+    <text x="160" y="654" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="700">1. Intake Risk Scoring</text>
+    <text x="55" y="676" fill="#064e3b" font-size="10" font-weight="600">• Real-Time Risk Score (0-100%)</text>
+    <text x="55" y="692" fill="#047857" font-size="9.5">• Flags high-probability breaches</text>
+    <text x="55" y="708" fill="#047857" font-size="9.5">• Dynamic re-scoring at milestones</text>
+    <text x="55" y="728" fill="#065f46" font-size="9.5" font-weight="700">Goal: Prevent 36.6% SLA breaches</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="295" y="639" width="230" height="110" rx="5" fill="#ffffff" stroke="#059669" stroke-width="1.2" />
+    <rect x="295" y="639" width="230" height="22" rx="5" fill="#10b981" />
+    <rect x="295" y="656" width="230" height="5" fill="#10b981" />
+    <text x="410" y="654" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="700">2. Smart Routing Recommender</text>
+    <text x="305" y="676" fill="#064e3b" font-size="10" font-weight="600">• Suggests resolving team at intake</text>
+    <text x="305" y="692" fill="#047857" font-size="9.5">• Cuts out intermediate triage hops</text>
+    <text x="305" y="708" fill="#047857" font-size="9.5">• Stops ping-pong bouncing</text>
+    <text x="305" y="728" fill="#065f46" font-size="9.5" font-weight="700">Goal: 40%+ faster first-touch fix</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="545" y="639" width="230" height="110" rx="5" fill="#ffffff" stroke="#059669" stroke-width="1.2" />
+    <rect x="545" y="639" width="230" height="22" rx="5" fill="#10b981" />
+    <rect x="545" y="656" width="230" height="5" fill="#10b981" />
+    <text x="660" y="654" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="700">3. Root-Cause Explainability</text>
+    <text x="555" y="676" fill="#064e3b" font-size="10" font-weight="600">• SHAP feature importance bars</text>
+    <text x="555" y="692" fill="#047857" font-size="9.5">• Matching IF-THEN rule alerts</text>
+    <text x="555" y="708" fill="#047857" font-size="9.5">• Prescriptive manager playbooks</text>
+    <text x="555" y="728" fill="#065f46" font-size="9.5" font-weight="700">Goal: Transparent &amp; trusted action</text>
+  </g>
+
+</svg>
+    </div>
+
+    <h2>2. Plain-English Walkthrough: The Entire Process Explained Simply</h2>
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 22px; margin-bottom: 25px;">
+        <h3 style="margin-top: 0; color: #1e3a8a; font-size: 17px;">The Real-World Problem: What Are We Trying to Solve?</h3>
+        <p style="font-size: 14px; margin-bottom: 10px;">Imagine an IT Helpdesk for a major enterprise. Every time an employee has an issue (laptop broken, email locked, server down, database crashed), they submit a <strong>support ticket</strong>.</p>
+        <p style="font-size: 14px; margin-bottom: 12px;">Every ticket comes with a company commitment called an <strong>SLA (Service Level Agreement)</strong>: <em>"We promise to fix this issue within X hours."</em></p>
+        
+        <div style="display: flex; gap: 15px; margin: 15px 0 20px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 250px; background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 16px; border-radius: 4px;">
+                <strong style="color: #991b1b; font-size: 14px;">The Core Problem:</strong>
+                <p style="margin: 4px 0 0; font-size: 13.5px; color: #7f1d1d;">Out of ~25,000 historical tickets, <strong>36.6% (over 9,100 tickets) miss their SLA deadline!</strong></p>
+            </div>
+            <div style="flex: 1; min-width: 250px; background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 4px;">
+                <strong style="color: #92400e; font-size: 14px;">Why Tickets Fail:</strong>
+                <p style="margin: 4px 0 0; font-size: 13.5px; color: #78350f;">1) <strong>Ping-pong bouncing</strong> between 79 support teams. 2) <strong>Waiting room traps</strong> (stuck in Awaiting Vendor/User). 3) <strong>Reactive triage</strong> (noticing delays only after the deadline has breached).</p>
+            </div>
+        </div>
+
+        <h3 style="color: #1e3a8a; margin-top: 20px; font-size: 17px;">The 5 Steps of the Solution</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 15px;">
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+                <div style="font-weight: 700; color: #1e293b; font-size: 14px; margin-bottom: 5px;">Step 1: Clean &amp; Split Data (Dual Streams)</div>
+                <p style="font-size: 13px; color: #475569; margin: 0; line-height: 1.5;">We clean dirty '?' values and split data into two views: <strong>Stream A (The Journey)</strong>—the timeline of updates, and <strong>Stream B (The Passport)</strong>—the ticket's Day-1 attributes (caller, category, priority).</p>
+            </div>
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+                <div style="font-weight: 700; color: #6b21a8; font-size: 14px; margin-bottom: 5px;">Step 2: Process Mining (Spotting Bottlenecks)</div>
+                <p style="font-size: 13px; color: #475569; margin: 0; line-height: 1.5;">We watch how tickets actually travel between teams. We detect <strong>ping-pong loops</strong> (bouncing between teams) and measure <strong>idle dwell hours</strong> in holding states to create behavioral scores for every ticket.</p>
+            </div>
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+                <div style="font-weight: 700; color: #15803d; font-size: 14px; margin-bottom: 5px;">Step 3: Profiling &amp; Workload Clustering</div>
+                <p style="font-size: 13px; color: #475569; margin: 0; line-height: 1.5;">We flag extreme "nightmare" tickets (e.g. 500+ hours, 10 reassignments) for deep root-cause inspection—<strong>we never delete them</strong>! Then we cluster normal tickets into 3 workloads: Quick Desk, Cross-Tier Infra, and Vendor-Dependent.</p>
+            </div>
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+                <div style="font-weight: 700; color: #92400e; font-size: 14px; margin-bottom: 5px;">Step 4: Root-Cause Rules (Plain-English Laws)</div>
+                <p style="font-size: 13px; color: #475569; margin: 0; line-height: 1.5;">FP-Growth scans past failures to produce transparent IF-THEN rules: <em>"IF Category = Database AND Reassignments &gt; 2 &rArr; SLA Breach Probability = 88%."</em> Managers can easily understand and trust these rules.</p>
+            </div>
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+                <div style="font-weight: 700; color: #9f1239; font-size: 14px; margin-bottom: 5px;">Step 5: Real-Time AI Prediction (LightGBM)</div>
+                <p style="font-size: 13px; color: #475569; margin: 0; line-height: 1.5;">The moment a new ticket arrives, the AI scores its breach risk (0–100%) and recommends the optimal assignment group, bypassing intermediate triage hops before delays can accumulate.</p>
+            </div>
+        </div>
+
+        <h3 style="color: #1e3a8a; margin-top: 25px; font-size: 17px;">What the IT Service Desk Manager Sees in Real Time</h3>
+        <p style="font-size: 13.5px; color: #475569; margin-bottom: 10px;">The operational output of this pipeline is an intelligent live triage screen:</p>
+        <table style="margin-top: 8px; font-size: 13px; width: 100%;">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Live Ticket</th>
+                    <th style="width: 18%;">AI Breach Risk</th>
+                    <th style="width: 27%;">Recommended Action</th>
+                    <th style="width: 30%;">Why? (Plain-English Reason)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>INC0049102</strong><br><span style="color:#64748b; font-size:12px;">Database slow query</span></td>
+                    <td><span style="color:#dc2626; font-weight:700; background:#fee2e2; padding:3px 8px; border-radius:4px;">84% High Risk</span></td>
+                    <td><strong>Bypass Level 1 &rarr; Send direct to Group 24</strong></td>
+                    <td>Matches Rule: <em>Category 40 + moderate priority breaches SLA when reassigned.</em></td>
+                </tr>
+                <tr>
+                    <td><strong>INC0049105</strong><br><span style="color:#64748b; font-size:12px;">Password reset</span></td>
+                    <td><span style="color:#16a34a; font-weight:700; background:#dcfce7; padding:3px 8px; border-radius:4px;">4% Low Risk</span></td>
+                    <td><strong>Keep in Standard Group 70</strong></td>
+                    <td>Fast-Track Archetype: <em>Average historical fix time &lt; 1.5 hours.</em></td>
+                </tr>
+                <tr>
+                    <td><strong>INC0048920</strong><br><span style="color:#64748b; font-size:12px;">Network gateway stall</span></td>
+                    <td><span style="color:#d97706; font-weight:700; background:#fef3c7; padding:3px 8px; border-radius:4px;">68% Medium Risk</span></td>
+                    <td><strong>Milestone Alert: Escalate to Senior Tier</strong></td>
+                    <td>Ticket entered <em>Awaiting Vendor</em> state (adds avg 42h delay).</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>3. Flaws in the Original Pipeline vs. Technical Rectifications</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 18%;">Pipeline Component</th>
+                <th style="width: 41%;">Original Pipeline Flaw (DM pipeline.html)</th>
+                <th style="width: 41%;">Methodological Rectification</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Outlier Handling</strong></td>
+                <td>
+                    <span class="issue-tag">Fatal Flaw</span><br>
+                    Isolation Forest strips out "extreme statistical anomalies" before process and rule mining. In ITSM, the worst outliers are tickets with 10+ reassignments, massive delays, or severe SLA breaches. <strong>Discarding them deletes the exact failure cases you need to diagnose!</strong>
+                </td>
+                <td>
+                    <span class="fix-tag">Retain &amp; Profile</span><br>
+                    Isolation Forest / LOF profiles deviant and pathological tickets for a dedicated <strong>Pathological Incident Audit</strong>, but they are <strong>retained in the dataset</strong> so models can learn the root causes of failure.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Data Granularity</strong></td>
+                <td>
+                    <span class="issue-tag">Unit Mismatch</span><br>
+                    Treats the event log as a flat table for K-Means clustering. An incident has between 2 to 40+ update rows. Clustering raw event rows scatters lifecycle events of the same ticket across different clusters.
+                </td>
+                <td>
+                    <span class="fix-tag">Dual-Stream Architecture</span><br>
+                    <strong>Stream A</strong> preserves the temporal event trace sequence for Process Mining. <strong>Stream B</strong> aggregates attributes to the Case level (1 row = 1 ticket) for ML and Clustering.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Execution Ordering</strong></td>
+                <td>
+                    <span class="issue-tag">Inverted Order</span><br>
+                    Runs clustering <em>before</em> process mining. This blinds clustering to crucial workflow metrics (ping-pong factor, dwell time in waiting states, rework cycles).
+                </td>
+                <td>
+                    <span class="fix-tag">Process Mining First</span><br>
+                    Process Mining executes first on the global event traces. It extracts quantitative behavioral features per ticket, which then feed directly into downstream clustering and predictive models.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Rule Mining Bridge</strong></td>
+                <td>
+                    <span class="issue-tag">Incompatible Input</span><br>
+                    Attempts to feed Apriori/FP-growth symbolic text rules into a "Regression Model" to predict SLA breaches. ML models train on numerical feature matrices, not text rule strings.
+                </td>
+                <td>
+                    <span class="fix-tag">Decoupled Dual Intelligence</span><br>
+                    Predictive ML uses Gradient Boosted Trees (LightGBM/XGBoost) for <strong>Binary Classification</strong> of SLA breach risk. Association rules provide human-readable symbolic explanations and operational guardrails.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Temporal Data Leakage</strong></td>
+                <td>
+                    <span class="issue-tag">Future Leakage</span><br>
+                    Scores live incoming tickets using features that only exist after resolution or closure (e.g., <code>resolved_at</code>, <code>resolved_by</code>, <code>closed_code</code>, cumulative <code>reassignment_count</code>).
+                </td>
+                <td>
+                    <span class="fix-tag">Multi-Stage Safeguards</span><br>
+                    Strict temporal separation: <strong>Stage 1 (Intake Model at t=0)</strong> uses strictly features known at ticket creation; <strong>Stage 2 (In-Flight Dynamic Model at t=k)</strong> updates risk scores at state milestones.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>4. Phase-by-Phase Technical Specifications</h2>
+
+    <div class="phase-card p1">
+        <h3>Phase 1: Dual-Stream Data Hygiene &amp; Feature Ingestion</h3>
+        <ul>
+            <li><strong>Data Hygiene:</strong> Convert <code>'?'</code> characters into standard <code>NaN</code>. Remove corrupted state values (e.g., <code>incident_state == '-100'</code>). Convert ultra-sparse columns (&gt;98% missing: <code>cmdb_ci</code>, <code>problem_id</code>, <code>rfc</code>, <code>vendor</code>, <code>caused_by</code>) into binary indicator flags (e.g., <code>has_problem_id = True/False</code>).</li>
+            <li><strong>Timestamp Parsing:</strong> Parse date strings with format <code>%d/%m/%Y %H:%M</code> and sort events chronologically by <code>sys_updated_at</code> within each incident <code>number</code>.</li>
+            <li><strong>Dual Representation:</strong>
+                <ul>
+                    <li><strong>Stream A (Event Trace View):</strong> Case ID (<code>number</code>), Activity (<code>incident_state</code>, <code>assignment_group</code>), Timestamp (<code>sys_updated_at</code>), Resource (<code>assigned_to</code>).</li>
+                    <li><strong>Stream B (Case Intake Matrix):</strong> Intake attributes known at t=0: Category, Subcategory, Location, Caller ID, Contact Type, Priority, Urgency, Impact, Open Hour of Day, Day of Week.</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase-card p2">
+        <h3>Phase 2: Global Process Mining &amp; Workflow Bottlenecks</h3>
+        <ul>
+            <li><strong>Trace Mining:</strong> Run Directly-Follows Graphs (DFG) and Heuristics/Inductive Miners across all 24,918 case traces using PM4Py.</li>
+            <li><strong>Bottleneck Identification:</strong>
+                <ul>
+                    <li><strong>Ping-Pong Loops:</strong> Automatically detect cyclic reassignment patterns between groups (e.g., Group 70 &rarr; Group 24 &rarr; Group 70).</li>
+                    <li><strong>Dwell Time Analysis:</strong> Measure exact time spent in non-working states (<code>Awaiting User Info</code>, <code>Awaiting Vendor</code>, <code>Awaiting Problem</code>).</li>
+                </ul>
+            </li>
+            <li><strong>Feature Engineering Output:</strong> Generate quantitative behavioral features per ticket:
+                <code>handoff_count</code>, <code>is_ping_pong_loop</code>, <code>dwell_awaiting_user_hrs</code>, <code>unique_groups_involved</code>.
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase-card p3">
+        <h3>Phase 3: Case Feature Integration, Anomaly Profiling &amp; Workload Clustering</h3>
+        <ul>
+            <li><strong>Feature Store Fusion:</strong> Join static intake attributes (Stream B) with trace-engineered process features (Phase 2) to build a unified Case Feature Store (1 row = 1 incident ticket).</li>
+            <li><strong>Anomaly Profiling (Isolation Forest / LOF):</strong> Detect and flag extreme pathological tickets (resolution time &gt; 500 hours or &gt; 5 reassignments). These are profiled for deep root-cause inspection, <strong>never discarded</strong>.</li>
+            <li><strong>Workload Segmentation (K-Prototypes / HDBSCAN):</strong> Cluster tickets using mixed numerical and categorical attributes to identify distinct operational workloads:
+                <ul>
+                    <li><em>Archetype 1 (Fast-Track):</em> Low complexity, single-touch password/desktop resets (&lt; 2h).</li>
+                    <li><em>Archetype 2 (Cross-Tier Infra):</em> High complexity, multi-group server/network issues requiring cross-department handoffs.</li>
+                    <li><em>Archetype 3 (External Blocked):</em> Tickets with high dwell time in vendor/user awaiting states.</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase-card p4">
+        <h3>Phase 4: Root-Cause Pattern &amp; Association Rule Mining</h3>
+        <ul>
+            <li><strong>Feature Discretization:</strong> Bin numerical metrics into categorical intervals:
+                <code>Handoffs: [0-1, 2-3, &gt;3]</code>, <code>Wait_Dwell: [Low, High]</code>, <code>Resolution: [&lt;24h, 24-168h, &gt;168h]</code>.</li>
+            <li><strong>FP-Growth Algorithm:</strong> Mine frequent itemsets and extract association rules filtered specifically for target failure consequents:
+                <ul>
+                    <li><code>Antecedent &rArr; {made_sla = False}</code></li>
+                    <li><code>Antecedent &rArr; {is_ping_pong = True}</code></li>
+                </ul>
+            </li>
+            <li><strong>Knowledge Base Output:</strong> Symbolic, human-interpretable rules with Confidence &gt; 70% and Lift &gt; 1.5 (e.g., <em>IF {Category 40, Priority Moderate, Handoffs &gt; 2} &rArr; {SLA Breach Probability: 88%, Lift: 2.3}</em>).</li>
+        </ul>
+    </div>
+
+    <div class="phase-card p5">
+        <h3>Phase 5: Multi-Stage Predictive Analytics &amp; Decision Support</h3>
+        <ul>
+            <li><strong>Strict Temporal Validation:</strong> Chronological train/test split (train on earlier months, test on subsequent months) to ensure zero lookahead bias.</li>
+            <li><strong>Supervised Ensemble (LightGBM / XGBoost):</strong>
+                <ol>
+                    <li><strong>Stage 1 — Intake SLA Breach Classifier (t=0):</strong> Real-time risk scoring using only intake attributes.</li>
+                    <li><strong>Stage 2 — Dynamic In-Flight Re-Scorer (t=k):</strong> Dynamic risk adjustment as tickets undergo reassignments or enter wait states.</li>
+                    <li><strong>Stage 3 — Smart Routing Recommender:</strong> Multi-class model predicting the correct assignment group at intake, eliminating intermediate triage hops.</li>
+                </ol>
+            </li>
+            <li><strong>Operational Decision Support Dashboard:</strong> Real-time dispatcher UI displaying live risk queues, SHAP feature importance bars, and matching Phase 4 rule warnings.</li>
+        </ul>
+    </div>
+</div>
+
+</body>
+</html>

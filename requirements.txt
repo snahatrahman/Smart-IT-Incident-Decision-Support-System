@@ -1,0 +1,12 @@
+# Core Data Manipulation & Analysis
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Machine Learning & Modeling
+scikit-learn>=1.3.0
+joblib>=1.3.0
+
+# Dashboard (app.py)
+fastapi
+uvicorn
+jinja2

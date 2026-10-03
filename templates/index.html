@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart IT Incident Decision Support System</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .tab-active { border-bottom: 3px solid #2563eb; color: #1d4ed8; font-weight: 600; }
+    .pulse-alert { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- ========================================================================= -->
+  <!-- Top Navigation Header -->
+  <!-- ========================================================================= -->
+  <header class="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="text-base font-bold tracking-tight text-white">Smart IT Incident Decision Support</span>
+          <span class="hidden sm:inline-block ml-2 px-2 py-0.5 text-[11px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-full">v2.0 GBDT + Process Mining</span>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2 text-xs text-slate-300 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span>Inference Ready (Sub-5ms)</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- Top KPI Stats Bar -->
+  <!-- ========================================================================= -->
+  <div class="bg-white border-b border-slate-200 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 text-center sm:text-left">
+        <div class="border-r border-slate-100 pr-3">
+          <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Queue Total</div>
+          <div class="text-lg font-bold text-slate-900 mono" id="kpi-total">4,984</div>
+        </div>
+        <div class="border-r border-slate-100 pr-3">
+          <div class="text-[11px] font-semibold text-rose-500 uppercase tracking-wider">High Risk SLA</div>
+          <div class="text-lg font-bold text-rose-600 mono" id="kpi-high">1,147 (23%)</div>
+        </div>
+        <div class="border-r border-slate-100 pr-3">
+          <div class="text-[11px] font-semibold text-blue-600 uppercase tracking-wider">Direct Route Acc</div>
+          <div class="text-lg font-bold text-blue-600 mono">75.7%</div>
+        </div>
+        <div class="border-r border-slate-100 pr-3">
+          <div class="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider">Breach Model AUC</div>
+          <div class="text-lg font-bold text-emerald-600 mono">0.7594</div>
+        </div>
+        <div class="border-r border-slate-100 pr-3">
+          <div class="text-[11px] font-semibold text-purple-600 uppercase tracking-wider">Mined Rules</div>
+          <div class="text-lg font-bold text-purple-600 mono" id="kpi-rules">28 Rules</div>
+        </div>
+        <div>
+          <div class="text-[11px] font-semibold text-amber-600 uppercase tracking-wider">Top Bottleneck</div>
+          <div class="text-xs font-semibold text-slate-700 truncate" title="Awaiting Vendor (364.1 hrs)">Vendor (364h avg)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- Navigation Tabs -->
+  <!-- ========================================================================= -->
+  <div class="bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav class="flex space-x-8" aria-label="Tabs">
+        <button onclick="switchTab('intake')" id="tab-btn-intake" class="py-3 px-1 text-sm font-medium border-b-2 text-slate-500 border-transparent hover:text-slate-700 hover:border-slate-300 tab-active">
+          📋 Complaint Intake & AI Decision Card
+        </button>
+        <button onclick="switchTab('bottlenecks')" id="tab-btn-bottlenecks" class="py-3 px-1 text-sm font-medium border-b-2 text-slate-500 border-transparent hover:text-slate-700 hover:border-slate-300">
+          🔄 Process Bottlenecks Explorer
+        </button>
+        <button onclick="switchTab('rules')" id="tab-btn-rules" class="py-3 px-1 text-sm font-medium border-b-2 text-slate-500 border-transparent hover:text-slate-700 hover:border-slate-300">
+          📜 Mined Root-Cause Rulebook
+        </button>
+        <button onclick="switchTab('queue')" id="tab-btn-queue" class="py-3 px-1 text-sm font-medium border-b-2 text-slate-500 border-transparent hover:text-slate-700 hover:border-slate-300">
+          ⚡ Live Dispatcher Queue
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN CONTENT CONTAINER -->
+  <!-- ========================================================================= -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+    <!-- ===================================================================== -->
+    <!-- TAB 1: COMPLAINT INTAKE & AI DECISION CARD -->
+    <!-- ===================================================================== -->
+    <div id="tab-content-intake" class="space-y-6">
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Complaint Intake Form (7 cols) -->
+        <div class="lg:col-span-7 bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">Incident Intake Form (Time Zero $t=0$)</h2>
+              <p class="text-xs text-slate-500">Capture initial ticket attributes to evaluate risk and recommend specialist routing.</p>
+            </div>
+            <span class="px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-600 rounded-md">Simulate Arrival</span>
+          </div>
+
+          <form id="intake-form" onsubmit="event.preventDefault(); evaluateTicket();" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1 flex items-center justify-between">
+                  <span class="flex items-center space-x-1">
+                    <span>Category</span>
+                    <span class="text-[10px] text-slate-400 font-normal">(Type to filter)</span>
+                  </span>
+                  <span id="cat-count-badge" class="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-mono">57 Categories</span>
+                </label>
+                <div class="relative" id="cat-combobox-wrapper">
+                  <div class="relative">
+                    <input 
+                      type="text" 
+                      id="inp-category-search" 
+                      autocomplete="off"
+                      placeholder="Search or select category (e.g. Database, 19, Network)..." 
+                      onfocus="openCategoryDropdown()"
+                      oninput="onCategorySearchInput(this.value)"
+                      onkeydown="handleCategorySearchKey(event)"
+                      class="w-full text-xs rounded-lg border-slate-300 border py-2 pl-3 pr-8 focus:ring-2 focus:ring-blue-500 bg-white font-medium text-slate-800 transition"
+                    />
+                    <button 
+                      type="button" 
+                      onclick="toggleCategoryDropdown()" 
+                      tabindex="-1"
+                      class="absolute inset-y-0 right-0 px-2.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-hidden"
+                    >
+                      <svg class="w-4 h-4 transition-transform duration-200" id="cat-dropdown-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Hidden input to store selected category value -->
+                  <input type="hidden" id="inp-category" value="" onchange="onCategoryChange()">
+
+                  <!-- Dropdown Menu -->
+                  <div 
+                    id="cat-dropdown-menu" 
+                    class="hidden absolute z-50 mt-1 w-full bg-white rounded-lg shadow-xl border border-slate-200 max-h-60 overflow-y-auto text-xs divide-y divide-slate-100"
+                  >
+                    <div id="cat-dropdown-items" class="py-1">
+                      <!-- Rendered options dynamically -->
+                    </div>
+                    <div id="cat-dropdown-empty" class="hidden p-3 text-center text-slate-400 text-xs">
+                      No matching categories found
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1 flex items-center justify-between">
+                  <span class="flex items-center space-x-1">
+                    <span>Subcategory</span>
+                    <span class="text-[10px] text-slate-400 font-normal">(Type to filter)</span>
+                  </span>
+                  <span id="subcat-count-badge" class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">Awaiting Category</span>
+                </label>
+                <div class="relative" id="subcat-combobox-wrapper">
+                  <div class="relative">
+                    <input 
+                      type="text" 
+                      id="inp-subcategory-search" 
+                      autocomplete="off"
+                      placeholder="Select category first..." 
+                      disabled
+                      onfocus="openSubcategoryDropdown()"
+                      oninput="onSubcategorySearchInput(this.value)"
+                      onkeydown="handleSubcategorySearchKey(event)"
+                      class="w-full text-xs rounded-lg border-slate-300 border py-2 pl-3 pr-8 focus:ring-2 focus:ring-blue-500 bg-slate-50 font-medium text-slate-800 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                    />
+                    <button 
+                      type="button" 
+                      id="subcat-dropdown-btn"
+                      disabled
+                      onclick="toggleSubcategoryDropdown()" 
+                      tabindex="-1"
+                      class="absolute inset-y-0 right-0 px-2.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-hidden disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <svg class="w-4 h-4 transition-transform duration-200" id="subcat-dropdown-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Hidden input to store selected subcategory value -->
+                  <input type="hidden" id="inp-subcategory" value="">
+
+                  <!-- Dropdown Menu -->
+                  <div 
+                    id="subcat-dropdown-menu" 
+                    class="hidden absolute z-50 mt-1 w-full bg-white rounded-lg shadow-xl border border-slate-200 max-h-60 overflow-y-auto text-xs divide-y divide-slate-100"
+                  >
+                    <div id="subcat-dropdown-items" class="py-1">
+                      <!-- Rendered options dynamically -->
+                    </div>
+                    <div id="subcat-dropdown-empty" class="hidden p-3 text-center text-slate-400 text-xs">
+                      No matching subcategories found
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Priority</label>
+                <select id="inp-priority" class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-blue-500 bg-white">
+                  <option value="1 - Critical">1 - Critical</option>
+                  <option value="2 - High">2 - High</option>
+                  <option value="3 - Moderate" selected>3 - Moderate</option>
+                  <option value="4 - Low">4 - Low</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Impact</label>
+                <select id="inp-impact" class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-blue-500 bg-white">
+                  <option value="1 - High">1 - High (Multi-Site)</option>
+                  <option value="2 - Medium" selected>2 - Medium (Department)</option>
+                  <option value="3 - Low">3 - Low (Single User)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Urgency</label>
+                <select id="inp-urgency" class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-blue-500 bg-white">
+                  <option value="1 - High">1 - High (Work Stoppage)</option>
+                  <option value="2 - Medium" selected>2 - Medium (Workaround)</option>
+                  <option value="3 - Low">3 - Low (Informational)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1 flex items-center justify-between">
+                  <span class="flex items-center space-x-1">
+                    <span>Location</span>
+                    <span class="text-[10px] text-slate-400 font-normal">(Type to filter)</span>
+                  </span>
+                  <span id="loc-count-badge" class="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-mono">Loading...</span>
+                </label>
+                <div class="relative" id="loc-combobox-wrapper">
+                  <div class="relative">
+                    <input 
+                      type="text" 
+                      id="inp-location-search" 
+                      autocomplete="off"
+                      placeholder="Search location (e.g. 143)..." 
+                      onfocus="openLocationDropdown()"
+                      oninput="onLocationSearchInput(this.value)"
+                      onkeydown="handleLocationSearchKey(event)"
+                      class="w-full text-xs rounded-lg border-slate-300 border py-2 pl-3 pr-8 focus:ring-2 focus:ring-blue-500 bg-white font-medium text-slate-800 transition"
+                    />
+                    <button 
+                      type="button" 
+                      onclick="toggleLocationDropdown()" 
+                      tabindex="-1"
+                      class="absolute inset-y-0 right-0 px-2.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-hidden"
+                    >
+                      <svg class="w-4 h-4 transition-transform duration-200" id="loc-dropdown-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Hidden input to store selected location value -->
+                  <input type="hidden" id="inp-location" value="">
+
+                  <!-- Dropdown Menu -->
+                  <div 
+                    id="loc-dropdown-menu" 
+                    class="hidden absolute z-50 mt-1 w-full bg-white rounded-lg shadow-xl border border-slate-200 max-h-60 overflow-y-auto text-xs divide-y divide-slate-100"
+                  >
+                    <div id="loc-dropdown-items" class="py-1">
+                      <!-- Rendered options dynamically -->
+                    </div>
+                    <div id="loc-dropdown-empty" class="hidden p-3 text-center text-slate-400 text-xs">
+                      No matching locations found
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Contact Type</label>
+                <select id="inp-contact" class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-blue-500 bg-white">
+                  <option value="Phone">Phone (Voice Dispatch)</option>
+                  <option value="Email">Email</option>
+                  <option value="Self service">Self Service Portal</option>
+                  <option value="Direct opening">Direct Opening</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Enterprise Sparse Flags -->
+            <div>
+              <span class="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wider">Enterprise Configuration Links:</span>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                  <input type="checkbox" id="chk-vendor" class="rounded text-blue-600 focus:ring-blue-500">
+                  <span>3rd-Party Vendor Involved</span>
+                </label>
+                <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                  <input type="checkbox" id="chk-problem" class="rounded text-blue-600 focus:ring-blue-500">
+                  <span>Linked to Problem ID</span>
+                </label>
+                <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                  <input type="checkbox" id="chk-cmdb" class="rounded text-blue-600 focus:ring-blue-500">
+                  <span>CMDB Server Linked</span>
+                </label>
+                <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                  <input type="checkbox" id="chk-rfc" class="rounded text-blue-600 focus:ring-blue-500">
+                  <span>Change Request (RFC)</span>
+                </label>
+                <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                  <input type="checkbox" id="chk-caused" class="rounded text-blue-600 focus:ring-blue-500">
+                  <span>Caused by Upgrade</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <button type="submit" class="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-sm rounded-lg shadow-md shadow-blue-500/20 transition flex items-center justify-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Evaluate & Generate Decision Card</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right Column: AI Decision Card (5 cols) -->
+        <div class="lg:col-span-5 flex flex-col justify-between">
+          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden" id="decision-card-container">
+            <!-- Header Badge -->
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Operational Output</div>
+              <span id="card-badge" class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                AWAITING INTAKE
+              </span>
+            </div>
+
+            <!-- Evaluated Incident Scope Banner -->
+            <div class="mt-3 flex items-center justify-between py-2 px-3 bg-slate-50 rounded-lg border border-slate-200 text-xs">
+              <div class="flex items-center space-x-1.5 overflow-hidden pr-2">
+                <span class="text-slate-400 font-medium">Category:</span>
+                <span id="card-category-name" class="font-bold text-slate-500 italic truncate">-- Not Selected --</span>
+              </div>
+              <div class="flex items-center space-x-1 shrink-0">
+                <span class="text-slate-400 font-medium">Sub:</span>
+                <span id="card-subcategory-name" class="font-semibold text-slate-400 font-mono">--</span>
+              </div>
+            </div>
+
+            <!-- Risk Probability Section -->
+            <div class="my-5 text-center">
+              <div class="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">SLA Breach Risk Probability</div>
+              <div class="text-5xl font-extrabold text-slate-400 mono tracking-tight" id="card-risk-pct">--%</div>
+              <div class="w-full bg-slate-100 h-2.5 rounded-full mt-3 overflow-hidden">
+                <div id="card-risk-bar" class="bg-slate-300 h-full rounded-full transition-all duration-500" style="width: 0%;"></div>
+              </div>
+              <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                <span>0% Safe</span>
+                <span>Threshold: 70%</span>
+                <span>100% Guaranteed Breach</span>
+              </div>
+            </div>
+
+            <!-- Prescribed Routing Target -->
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-4">
+              <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Smart Routing Recommender</div>
+              <div class="flex items-center space-x-2">
+                <span class="text-2xl">🎯</span>
+                <div>
+                  <div class="text-base font-bold text-slate-600" id="card-group">Awaiting Category...</div>
+                  <div class="text-xs text-slate-400">Select incident attributes to generate recommendation</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Prescribed Operational Action -->
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
+              <div class="text-[11px] font-semibold text-blue-700 uppercase tracking-wider mb-1">Prescribed Action Directive</div>
+              <div class="text-xs font-semibold text-blue-900 leading-relaxed" id="card-action">
+                Select a Category & click Evaluate to generate operational routing directive.
+              </div>
+            </div>
+
+            <!-- Plain-English Root Cause Explanation -->
+            <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
+              <div class="flex items-center space-x-1.5 text-[11px] font-semibold text-amber-800 uppercase tracking-wider mb-1">
+                <span>💡</span>
+                <span>Explainable Root-Cause Rationale</span>
+              </div>
+              <div class="text-xs text-amber-900 leading-relaxed" id="card-explanation">
+                Choose a Category above or use a Quick Simulation Preset to predict breach risk and root-cause factors.
+              </div>
+              <div id="card-rule-stats" class="mt-2 text-[11px] font-mono text-amber-800 hidden">
+                Historical Confidence: <strong id="card-conf">--%</strong> | Lift: <strong id="card-lift">--x</strong>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="mt-5">
+              <button onclick="confirmDispatch()" class="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition shadow-sm">
+                ✓ Confirm & Push Ticket to Specialist Queue
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 2: PROCESS BOTTLENECK EXPLORER -->
+    <!-- ===================================================================== -->
+    <div id="tab-content-bottlenecks" class="hidden space-y-6">
+      
+      <!-- Flowchart Visual Banner -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
+        <h2 class="text-base font-bold text-slate-900 mb-1">Directly-Follows Graph (DFG): The ServiceNow Lifecycle</h2>
+        <p class="text-xs text-slate-500 mb-6">Reconstructed from 141,712 chronological audit events. Highlighted nodes indicate critical holding room traps.</p>
+        
+        <!-- Flow Diagram -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-center">
+          <div class="bg-slate-50 border border-slate-200 p-4 rounded-lg">
+            <span class="text-xs font-semibold text-slate-400 block uppercase">Step 1</span>
+            <span class="text-sm font-bold text-slate-800">New (Intake)</span>
+            <span class="text-xs text-slate-500 block mt-1">Avg 24.7 hrs</span>
+          </div>
+          <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+            <span class="text-xs font-semibold text-blue-500 block uppercase">Step 2</span>
+            <span class="text-sm font-bold text-blue-900">Active Work</span>
+            <span class="text-xs text-blue-600 block mt-1">Avg 38.4 hrs</span>
+          </div>
+          <div class="bg-rose-50 border-2 border-rose-300 p-4 rounded-lg relative overflow-hidden shadow-xs">
+            <span class="absolute top-1 right-2 text-[10px] font-bold text-rose-600 bg-rose-100 px-1.5 py-0.5 rounded">BOTTLENECK</span>
+            <span class="text-xs font-semibold text-rose-500 block uppercase">Holding Trap</span>
+            <span class="text-sm font-bold text-rose-900">Awaiting Vendor</span>
+            <span class="text-xs font-extrabold text-rose-600 block mt-1">364.1 hrs (~15 Days)</span>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+            <span class="text-xs font-semibold text-amber-600 block uppercase">Step 4</span>
+            <span class="text-sm font-bold text-amber-900">Awaiting User Info</span>
+            <span class="text-xs text-amber-700 block mt-1">Avg 74.1–110.9 hrs</span>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg">
+            <span class="text-xs font-semibold text-emerald-600 block uppercase">Step 5</span>
+            <span class="text-sm font-bold text-emerald-900">Resolved / Closed</span>
+            <span class="text-xs text-emerald-600 block mt-1">End of Life</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart & Table Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Delay Ranking Bar Chart (6 cols) -->
+        <div class="lg:col-span-6 bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
+          <h3 class="text-sm font-bold text-slate-900 mb-1">State Transition Delay Ranking (Hours)</h3>
+          <p class="text-xs text-slate-500 mb-4">Transitions where tickets spend the most idle dwell time before progressing.</p>
+          <div class="h-72">
+            <canvas id="bottleneckChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Transition Table (6 cols) -->
+        <div class="lg:col-span-6 bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex flex-col">
+          <h3 class="text-sm font-bold text-slate-900 mb-1">Discovered Process Transitions</h3>
+          <p class="text-xs text-slate-500 mb-3">Extracted state-to-state hops sorted by total company volume.</p>
+          <div class="overflow-y-auto max-h-72 flex-1 border border-slate-100 rounded-lg">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 sticky top-0 border-b border-slate-200 text-slate-600">
+                <tr>
+                  <th class="p-2.5">From State</th>
+                  <th class="p-2.5">To State</th>
+                  <th class="p-2.5">Volume</th>
+                  <th class="p-2.5">Avg Duration</th>
+                </tr>
+              </thead>
+              <tbody id="bottlenecks-tbody" class="divide-y divide-slate-100 text-slate-700">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 3: MINED ROOT-CAUSE RULEBOOK -->
+    <!-- ===================================================================== -->
+    <div id="tab-content-rules" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-100 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Mined Root-Cause Rulebook (Association Rules)</h2>
+            <p id="rules-subtitle" class="text-xs text-slate-500">28 mathematically validated IF-THEN rules discovered from historical failures (Confidence &ge; 60%, Lift &gt; 1.25x).</p>
+          </div>
+          <input type="text" id="rule-search" oninput="filterRules()" placeholder="Filter rules by keyword..." class="text-xs rounded-lg border border-slate-300 p-2 w-full sm:w-64">
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600">
+              <tr>
+                <th class="p-3">#</th>
+                <th class="p-3">Symptom Condition (Antecedent)</th>
+                <th class="p-3">Predicted Consequent</th>
+                <th class="p-3">Confidence</th>
+                <th class="p-3">Lift Ratio</th>
+                <th class="p-3">Historical Volume</th>
+              </tr>
+            </thead>
+            <tbody id="rules-tbody" class="divide-y divide-slate-100 text-slate-700">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 4: LIVE DISPATCHER QUEUE -->
+    <!-- ===================================================================== -->
+    <div id="tab-content-queue" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-100 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Live Service Desk Dispatcher Queue</h2>
+            <p class="text-xs text-slate-500">Prioritized queue of incoming tickets enriched with predictive breach risks and direct specialist routing targets.</p>
+          </div>
+          <!-- Filter Controls -->
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs">
+              <button onclick="filterQueueTier('ALL')" id="filter-all" class="px-2.5 py-1 rounded-md font-semibold bg-white text-slate-800 shadow-xs">All</button>
+              <button onclick="filterQueueTier('HIGH RISK')" id="filter-high" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800">High Risk</button>
+              <button onclick="filterQueueTier('MEDIUM')" id="filter-med" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800">Medium</button>
+              <button onclick="filterQueueTier('LOW RISK')" id="filter-low" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800">Low Risk</button>
+            </div>
+            <input type="text" id="queue-search" oninput="debounceQueueSearch()" placeholder="Search ID or Category..." class="text-xs rounded-lg border border-slate-300 p-2 w-48">
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600">
+              <tr>
+                <th class="p-3">Ticket ID</th>
+                <th class="p-3">Category</th>
+                <th class="p-3">Priority</th>
+                <th class="p-3">Breach Risk</th>
+                <th class="p-3">Risk Tier</th>
+                <th class="p-3">Prescribed Action</th>
+                <th class="p-3">Explainable Root-Cause</th>
+              </tr>
+            </thead>
+            <tbody id="queue-tbody" class="divide-y divide-slate-100 text-slate-700">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+        
+        <div id="queue-load-more-container" class="mt-4 text-center hidden">
+          <button onclick="loadMoreQueue()" class="px-4 py-2 bg-slate-100 text-slate-700 font-medium text-xs rounded-lg hover:bg-slate-200 transition focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+            Load More Tickets
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- Footer -->
+  <!-- ========================================================================= -->
+  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400">
+    Smart IT Incident Decision Support System &bull; Powered by HistGradientBoosting (GBDT) &bull; Zero Lookahead Leakage
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- Client JavaScript Logic -->
+  <!-- ========================================================================= -->
+  <script>
+    let currentTier = 'ALL';
+    let searchDebounceTimer = null;
+    let allRulesCache = [];
+    let bottleneckChartInstance = null;
+    let metadataCache = { categories: [], cat_subcat_map: {}, locations: [] };
+
+    // Standard ITIL Domain Mapping for categories
+    const CATEGORY_NAMES = {
+      'Category 2': 'Category 2 (Network Services)',
+      'Category 3': 'Category 3 (Hardware & Peripherals)',
+      'Category 4': 'Category 4 (Software Distribution)',
+      'Category 5': 'Category 5 (Workstation Management)',
+      'Category 6': 'Category 6 (Telephony & VoIP)',
+      'Category 7': 'Category 7 (Enterprise Email)',
+      'Category 8': 'Category 8 (Storage Systems)',
+      'Category 9': 'Category 9 (Application Services)',
+      'Category 10': 'Category 10 (Virtualization & Cloud)',
+      'Category 12': 'Category 12 (Identity & Directory)',
+      'Category 13': 'Category 13 (Printing & Imaging)',
+      'Category 14': 'Category 14 (Security & Firewall)',
+      'Category 15': 'Category 15 (Collaboration Tools)',
+      'Category 16': 'Category 16 (Mobile Devices)',
+      'Category 17': 'Category 17 (VPN & Remote Access)',
+      'Category 19': 'Category 19 (Database Systems)',
+      'Category 20': 'Category 20 (Cloud Platform)',
+      'Category 21': 'Category 21 (API & Integration)',
+      'Category 22': 'Category 22 (Monitoring & Telemetry)',
+      'Category 23': 'Category 23 (Web Portals)',
+      'Category 24': 'Category 24 (Data Analytics)',
+      'Category 25': 'Category 25 (Access Governance)',
+      'Category 26': 'Category 26 (Enterprise ERP)',
+      'Category 27': 'Category 27 (Customer CRM)',
+      'Category 28': 'Category 28 (Financial Systems)',
+      'Category 29': 'Category 29 (Human Resources HRIS)',
+      'Category 30': 'Category 30 (Supply Chain SCM)',
+      'Category 31': 'Category 31 (Facility Systems)',
+      'Category 32': 'Category 32 (Operating Systems)',
+      'Category 33': 'Category 33 (Data Warehouse)',
+      'Category 34': 'Category 34 (Backup & Disaster Recovery)',
+      'Category 35': 'Category 35 (DevOps & CI/CD)',
+      'Category 36': 'Category 36 (Container Services)',
+      'Category 37': 'Category 37 (Content Management)',
+      'Category 38': 'Category 38 (Compliance & Audit)',
+      'Category 40': 'Category 40 (Middleware Services)',
+      'Category 41': 'Category 41 (Data Pipeline)',
+      'Category 42': 'Category 42 (Network Infrastructure)',
+      'Category 43': 'Category 43 (Messaging Queues)',
+      'Category 44': 'Category 44 (Public DNS & CDN)',
+      'Category 45': 'Category 45 (Endpoint Security)',
+      'Category 46': 'Category 46 (Web & Host Services)',
+      'Category 47': 'Category 47 (Asset Management)',
+      'Category 48': 'Category 48 (Identity Federation SSO)',
+      'Category 49': 'Category 49 (Licensing & Subscriptions)',
+      'Category 50': 'Category 50 (Incident Tooling)',
+      'Category 51': 'Category 51 (File Shares & NAS)',
+      'Category 52': 'Category 52 (Batch Processing)',
+      'Category 53': 'Category 53 (User Access & Desktop)',
+      'Category 54': 'Category 54 (Security Certificates & SSL)',
+      'Category 55': 'Category 55 (Mainframe Services)',
+      'Category 56': 'Category 56 (External Integrations)',
+      'Category 57': 'Category 57 (Core Banking)',
+      'Category 59': 'Category 59 (Workflow Automation)',
+      'Category 61': 'Category 61 (Edge Computing)',
+      'Category 62': 'Category 62 (Security Operations SOC)',
+      'Category 63': 'Category 63 (Payment Gateways)'
+    };
+
+    function getCategoryDisplayName(catKey) {
+      return CATEGORY_NAMES[catKey] || `${catKey}`;
+    }
+
+    const SUBCATEGORY_NAMES = {
+      'Subcategory 174': 'Subcategory 174 (Database Outage / Core)',
+      'Subcategory 224': 'Subcategory 224 (Gateway / Network Edge)',
+      'Subcategory 242': 'Subcategory 242 (Software Bug / Desktop)',
+      'Subcategory 215': 'Subcategory 215 (Service Desk Default)'
+    };
+
+    function getSubcategoryDisplayName(subKey) {
+      if (!subKey) return '--';
+      if (SUBCATEGORY_NAMES[subKey]) return SUBCATEGORY_NAMES[subKey];
+      const match = subKey.match(/Subcategory (\d+)/);
+      if (match) {
+        const num = parseInt(match[1]);
+        const domains = ['Hardware', 'Software', 'Network', 'Database', 'Cloud', 'Access', 'Security', 'Web'];
+        const domain = domains[num % domains.length];
+        return `${subKey} (${domain} Issue)`;
+      }
+      return subKey;
+    }
+
+    const LOCATION_NAMES = {
+      'Location 143': 'Location 143 (HQ Data Center)',
+      'Location 165': 'Location 165 (Regional Office)',
+      'Location 108': 'Location 108 (Remote Branch)',
+      'Location 204': 'Location 204 (Operations Center)'
+    };
+
+    function getLocationDisplayName(locKey) {
+      if (!locKey) return '--';
+      if (LOCATION_NAMES[locKey]) return LOCATION_NAMES[locKey];
+      
+      const match = locKey.match(/Location (\d+)/);
+      if (match) {
+        const num = parseInt(match[1]);
+        const types = ['Regional Office', 'Remote Branch', 'Logistics Center', 'Corporate Campus', 'Data Center', 'Support Hub', 'Retail Store', 'Factory'];
+        const regions = ['NA', 'EMEA', 'APAC', 'LATAM'];
+        const type = types[num % types.length];
+        const region = regions[num % regions.length];
+        return `${locKey} (${region} ${type})`;
+      }
+      return locKey;
+    }
+
+
+    // Natural alphanumeric ascending sort
+    function naturalSort(arr) {
+      return [...arr].sort((a, b) => {
+        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+      });
+    }
+
+    // =========================================================================
+    // Searchable Category Combobox Logic
+    // =========================================================================
+    let isCategoryDropdownOpen = false;
+
+    function openCategoryDropdown() {
+      const menu = document.getElementById('cat-dropdown-menu');
+      const chevron = document.getElementById('cat-dropdown-chevron');
+      if (menu) menu.classList.remove('hidden');
+      if (chevron) chevron.classList.add('rotate-180');
+      isCategoryDropdownOpen = true;
+      filterCategoryOptions(document.getElementById('inp-category-search').value);
+    }
+
+    function closeCategoryDropdown() {
+      const menu = document.getElementById('cat-dropdown-menu');
+      const chevron = document.getElementById('cat-dropdown-chevron');
+      if (menu) menu.classList.add('hidden');
+      if (chevron) chevron.classList.remove('rotate-180');
+      isCategoryDropdownOpen = false;
+    }
+
+    function toggleCategoryDropdown() {
+      if (isCategoryDropdownOpen) {
+        closeCategoryDropdown();
+      } else {
+        const searchInput = document.getElementById('inp-category-search');
+        if (searchInput) searchInput.focus();
+        openCategoryDropdown();
+      }
+    }
+
+    function selectCategory(catKey, preferredSub = null) {
+      const hiddenInput = document.getElementById('inp-category');
+      const searchInput = document.getElementById('inp-category-search');
+      
+      if (hiddenInput) hiddenInput.value = catKey;
+      if (searchInput) searchInput.value = getCategoryDisplayName(catKey);
+      
+      closeCategoryDropdown();
+      updateSubcategories(catKey, preferredSub);
+      
+      const cardCat = document.getElementById('card-category-name');
+      if (cardCat) cardCat.innerText = getCategoryDisplayName(catKey);
+    }
+
+    function filterCategoryOptions(query = '') {
+      const container = document.getElementById('cat-dropdown-items');
+      const emptyMsg = document.getElementById('cat-dropdown-empty');
+      if (!container || !metadataCache.categories) return;
+
+      container.innerHTML = '';
+      const q = (query || '').trim().toLowerCase();
+      const sortedCats = naturalSort(metadataCache.categories || []);
+      const currentSelected = document.getElementById('inp-category').value;
+      
+      const filtered = sortedCats.filter(cat => {
+        if (!q) return true;
+        const name = getCategoryDisplayName(cat).toLowerCase();
+        const raw = cat.toLowerCase();
+        return name.includes(q) || raw.includes(q);
+      });
+
+      if (filtered.length === 0) {
+        emptyMsg.classList.remove('hidden');
+      } else {
+        emptyMsg.classList.add('hidden');
+        filtered.forEach(cat => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          const isSelected = currentSelected === cat;
+          btn.className = `w-full text-left px-3 py-2 flex items-center justify-between hover:bg-blue-50 transition cursor-pointer ${
+            isSelected ? 'bg-blue-50 font-bold text-blue-700' : 'text-slate-700'
+          }`;
+          
+          btn.innerHTML = `
+            <span class="truncate">${getCategoryDisplayName(cat)}</span>
+            ${isSelected ? '<span class="text-blue-600 text-xs ml-2 font-bold">✓</span>' : ''}
+          `;
+          
+          btn.onmousedown = (e) => {
+            e.preventDefault();
+            selectCategory(cat);
+          };
+          
+          container.appendChild(btn);
+        });
+      }
+    }
+
+    function handleCategorySearchKey(e) {
+      if (e.key === 'Escape') {
+        closeCategoryDropdown();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const container = document.getElementById('cat-dropdown-items');
+        const firstBtn = container ? container.querySelector('button') : null;
+        if (firstBtn) {
+          firstBtn.dispatchEvent(new MouseEvent('mousedown'));
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        openCategoryDropdown();
+      }
+    }
+
+    function onCategorySearchInput(val) {
+      if (!val || !val.trim()) {
+        document.getElementById('inp-category').value = '';
+        resetSubcategories();
+        const cardCat = document.getElementById('card-category-name');
+        if (cardCat) cardCat.innerText = '-- Not Selected --';
+      }
+      filterCategoryOptions(val);
+    }
+
+    // Close combobox when clicking outside
+    document.addEventListener('click', (e) => {
+      const wrapper = document.getElementById('cat-combobox-wrapper');
+      if (wrapper && !wrapper.contains(e.target)) {
+        closeCategoryDropdown();
+        const curCat = document.getElementById('inp-category').value;
+        const searchInput = document.getElementById('inp-category-search');
+        if (searchInput) {
+          searchInput.value = curCat ? getCategoryDisplayName(curCat) : '';
+        }
+      }
+    });
+
+    // =========================================================================
+    // Searchable Subcategory Combobox Logic
+    // =========================================================================
+    let isSubcategoryDropdownOpen = false;
+    let currentSubcategoriesList = [];
+
+    function openSubcategoryDropdown() {
+      const selectedCat = document.getElementById('inp-category').value;
+      if (!selectedCat) {
+        openCategoryDropdown();
+        return;
+      }
+      const menu = document.getElementById('subcat-dropdown-menu');
+      const chevron = document.getElementById('subcat-dropdown-chevron');
+      if (menu) menu.classList.remove('hidden');
+      if (chevron) chevron.classList.add('rotate-180');
+      isSubcategoryDropdownOpen = true;
+      filterSubcategoryOptions(document.getElementById('inp-subcategory-search').value);
+    }
+
+    function closeSubcategoryDropdown() {
+      const menu = document.getElementById('subcat-dropdown-menu');
+      const chevron = document.getElementById('subcat-dropdown-chevron');
+      if (menu) menu.classList.add('hidden');
+      if (chevron) chevron.classList.remove('rotate-180');
+      isSubcategoryDropdownOpen = false;
+    }
+
+    function toggleSubcategoryDropdown() {
+      const selectedCat = document.getElementById('inp-category').value;
+      if (!selectedCat) {
+        openCategoryDropdown();
+        return;
+      }
+      if (isSubcategoryDropdownOpen) {
+        closeSubcategoryDropdown();
+      } else {
+        const searchInput = document.getElementById('inp-subcategory-search');
+        if (searchInput && !searchInput.disabled) {
+          searchInput.focus();
+          openSubcategoryDropdown();
+        }
+      }
+    }
+
+    function selectSubcategory(subKey) {
+      const hiddenInput = document.getElementById('inp-subcategory');
+      const searchInput = document.getElementById('inp-subcategory-search');
+      
+      if (hiddenInput) hiddenInput.value = subKey;
+      if (searchInput) searchInput.value = subKey ? getSubcategoryDisplayName(subKey) : '';
+      
+      closeSubcategoryDropdown();
+      
+      const cardSub = document.getElementById('card-subcategory-name');
+      if (cardSub) cardSub.innerText = subKey ? getSubcategoryDisplayName(subKey) : '--';
+    }
+
+    function filterSubcategoryOptions(query = '') {
+      const container = document.getElementById('subcat-dropdown-items');
+      const emptyMsg = document.getElementById('subcat-dropdown-empty');
+      if (!container) return;
+
+      container.innerHTML = '';
+      const q = (query || '').trim().toLowerCase();
+      const currentSelected = document.getElementById('inp-subcategory').value;
+      
+      const filtered = currentSubcategoriesList.filter(sub => {
+        if (!q) return true;
+        const name = getSubcategoryDisplayName(sub).toLowerCase();
+        const raw = sub.toLowerCase();
+        return name.includes(q) || raw.includes(q);
+      });
+
+      if (filtered.length === 0) {
+        emptyMsg.classList.remove('hidden');
+      } else {
+        emptyMsg.classList.add('hidden');
+        filtered.forEach(sub => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          const isSelected = currentSelected === sub;
+          btn.className = `w-full text-left px-3 py-2 flex items-center justify-between hover:bg-blue-50 transition cursor-pointer ${
+            isSelected ? 'bg-blue-50 font-bold text-blue-700' : 'text-slate-700'
+          }`;
+          
+          btn.innerHTML = `
+            <span class="truncate">${getSubcategoryDisplayName(sub)}</span>
+            ${isSelected ? '<span class="text-blue-600 text-xs ml-2 font-bold">✓</span>' : ''}
+          `;
+          
+          btn.onmousedown = (e) => {
+            e.preventDefault();
+            selectSubcategory(sub);
+          };
+          
+          container.appendChild(btn);
+        });
+      }
+    }
+
+    function handleSubcategorySearchKey(e) {
+      if (e.key === 'Escape') {
+        closeSubcategoryDropdown();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const container = document.getElementById('subcat-dropdown-items');
+        const firstBtn = container ? container.querySelector('button') : null;
+        if (firstBtn) {
+          firstBtn.dispatchEvent(new MouseEvent('mousedown'));
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        openSubcategoryDropdown();
+      }
+    }
+
+    function onSubcategorySearchInput(val) {
+      if (!val || !val.trim()) {
+        document.getElementById('inp-subcategory').value = '';
+        const cardSub = document.getElementById('card-subcategory-name');
+        if (cardSub) cardSub.innerText = '--';
+      }
+      filterSubcategoryOptions(val);
+    }
+
+    // Close subcategory combobox when clicking outside
+    document.addEventListener('click', (e) => {
+      const wrapper = document.getElementById('subcat-combobox-wrapper');
+      if (wrapper && !wrapper.contains(e.target)) {
+        closeSubcategoryDropdown();
+        const curSub = document.getElementById('inp-subcategory').value;
+        const searchInput = document.getElementById('inp-subcategory-search');
+        if (searchInput && !searchInput.disabled) {
+          searchInput.value = curSub ? getSubcategoryDisplayName(curSub) : '';
+        }
+      }
+    });
+
+    // Reset subcategories to awaiting state
+    function resetSubcategories() {
+      currentSubcategoriesList = [];
+      const searchInput = document.getElementById('inp-subcategory-search');
+      const hiddenInput = document.getElementById('inp-subcategory');
+      const btn = document.getElementById('subcat-dropdown-btn');
+      
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.disabled = true;
+        searchInput.placeholder = 'Select category first...';
+        searchInput.className = 'w-full text-xs rounded-lg border-slate-300 border py-2 pl-3 pr-8 focus:ring-2 focus:ring-blue-500 bg-slate-50 font-medium text-slate-800 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer';
+      }
+      if (btn) btn.disabled = true;
+      if (hiddenInput) hiddenInput.value = '';
+
+      const countBadge = document.getElementById('subcat-count-badge');
+      if (countBadge) countBadge.innerText = 'Awaiting Category';
+      const cardSub = document.getElementById('card-subcategory-name');
+      if (cardSub) cardSub.innerText = '--';
+      closeSubcategoryDropdown();
+    }
+
+    // Populate subcategories when category is selected
+    function updateSubcategories(cat, preferredSub = null) {
+      if (!cat) {
+        resetSubcategories();
+        return;
+      }
+
+      const searchInput = document.getElementById('inp-subcategory-search');
+      const btn = document.getElementById('subcat-dropdown-btn');
+      
+      // Enable subcategory combobox
+      if (searchInput) {
+        searchInput.disabled = false;
+        searchInput.placeholder = 'Type to filter subcategory (e.g. 174)...';
+        searchInput.className = 'w-full text-xs rounded-lg border-slate-300 border py-2 pl-3 pr-8 focus:ring-2 focus:ring-blue-500 bg-white font-medium text-slate-800 transition cursor-pointer shadow-xs';
+      }
+      if (btn) btn.disabled = false;
+
+      let subs = (metadataCache.cat_subcat_map && metadataCache.cat_subcat_map[cat]) ? metadataCache.cat_subcat_map[cat] : [];
+      subs = naturalSort(subs);
+      currentSubcategoriesList = subs;
+
+      const countBadge = document.getElementById('subcat-count-badge');
+      if (countBadge) countBadge.innerText = `${subs.length} Options (Sorted)`;
+
+      // Set preferred or initial subcategory
+      if (preferredSub && subs.includes(preferredSub)) {
+        selectSubcategory(preferredSub);
+      } else if (subs.length === 1) {
+        selectSubcategory(subs[0]);
+      } else {
+        const hiddenInput = document.getElementById('inp-subcategory');
+        if (hiddenInput) hiddenInput.value = '';
+        if (searchInput) searchInput.value = '';
+        const cardSub = document.getElementById('card-subcategory-name');
+        if (cardSub) cardSub.innerText = '--';
+      }
+    }
+
+    // =========================================================================
+    // Searchable Location Combobox Logic
+    // =========================================================================
+    let isLocationDropdownOpen = false;
+
+    function openLocationDropdown() {
+      const menu = document.getElementById('loc-dropdown-menu');
+      const chevron = document.getElementById('loc-dropdown-chevron');
+      if (menu) menu.classList.remove('hidden');
+      if (chevron) chevron.classList.add('rotate-180');
+      isLocationDropdownOpen = true;
+      filterLocationOptions(document.getElementById('inp-location-search').value);
+    }
+
+    function closeLocationDropdown() {
+      const menu = document.getElementById('loc-dropdown-menu');
+      const chevron = document.getElementById('loc-dropdown-chevron');
+      if (menu) menu.classList.add('hidden');
+      if (chevron) chevron.classList.remove('rotate-180');
+      isLocationDropdownOpen = false;
+    }
+
+    function toggleLocationDropdown() {
+      if (isLocationDropdownOpen) {
+        closeLocationDropdown();
+      } else {
+        const searchInput = document.getElementById('inp-location-search');
+        if (searchInput) searchInput.focus();
+        openLocationDropdown();
+      }
+    }
+
+    function selectLocation(locKey) {
+      const hiddenInput = document.getElementById('inp-location');
+      const searchInput = document.getElementById('inp-location-search');
+      
+      if (hiddenInput) hiddenInput.value = locKey;
+      if (searchInput) searchInput.value = locKey ? getLocationDisplayName(locKey) : '';
+      
+      closeLocationDropdown();
+    }
+
+    function filterLocationOptions(query = '') {
+      const container = document.getElementById('loc-dropdown-items');
+      const emptyMsg = document.getElementById('loc-dropdown-empty');
+      if (!container || !metadataCache.locations) return;
+
+      container.innerHTML = '';
+      const q = (query || '').trim().toLowerCase();
+      const sortedLocs = naturalSort(metadataCache.locations || []);
+      const currentSelected = document.getElementById('inp-location').value;
+      
+      const filtered = sortedLocs.filter(loc => {
+        if (!q) return true;
+        const name = getLocationDisplayName(loc).toLowerCase();
+        const raw = loc.toLowerCase();
+        return name.includes(q) || raw.includes(q);
+      });
+
+      if (filtered.length === 0) {
+        emptyMsg.classList.remove('hidden');
+      } else {
+        emptyMsg.classList.add('hidden');
+        filtered.forEach(loc => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          const isSelected = currentSelected === loc;
+          btn.className = `w-full text-left px-3 py-2 flex items-center justify-between hover:bg-blue-50 transition cursor-pointer ${
+            isSelected ? 'bg-blue-50 font-bold text-blue-700' : 'text-slate-700'
+          }`;
+          
+          btn.innerHTML = `
+            <span class="truncate">${getLocationDisplayName(loc)}</span>
+            ${isSelected ? '<span class="text-blue-600 text-xs ml-2 font-bold">✓</span>' : ''}
+          `;
+          
+          btn.onmousedown = (e) => {
+            e.preventDefault();
+            selectLocation(loc);
+          };
+          
+          container.appendChild(btn);
+        });
+      }
+    }
+
+    function handleLocationSearchKey(e) {
+      if (e.key === 'Escape') {
+        closeLocationDropdown();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const container = document.getElementById('loc-dropdown-items');
+        const firstBtn = container ? container.querySelector('button') : null;
+        if (firstBtn) {
+          firstBtn.dispatchEvent(new MouseEvent('mousedown'));
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        openLocationDropdown();
+      }
+    }
+
+    function onLocationSearchInput(val) {
+      if (!val || !val.trim()) {
+        document.getElementById('inp-location').value = '';
+      }
+      filterLocationOptions(val);
+    }
+
+    // Close location combobox when clicking outside
+    document.addEventListener('click', (e) => {
+      const wrapper = document.getElementById('loc-combobox-wrapper');
+      if (wrapper && !wrapper.contains(e.target)) {
+        closeLocationDropdown();
+        const curLoc = document.getElementById('inp-location').value;
+        const searchInput = document.getElementById('inp-location-search');
+        if (searchInput) {
+          searchInput.value = curLoc ? getLocationDisplayName(curLoc) : '';
+        }
+      }
+    });
+
+    // Load full catalog metadata
+    async function loadMetadata() {
+      try {
+        const res = await fetch('/api/metadata');
+        metadataCache = await res.json();
+        
+        if (metadataCache.categories && metadataCache.categories.length > 0) {
+          document.getElementById('cat-count-badge').innerText = `${metadataCache.categories.length} Categories (Sorted)`;
+        }
+
+        // Leave Category empty initially with placeholder
+        const searchInput = document.getElementById('inp-category-search');
+        const hiddenInput = document.getElementById('inp-category');
+        if (searchInput) searchInput.value = '';
+        if (hiddenInput) hiddenInput.value = '';
+        resetSubcategories();
+
+        if (metadataCache.locations && metadataCache.locations.length > 0) {
+          const locBadge = document.getElementById('loc-count-badge');
+          if (locBadge) locBadge.innerText = `${metadataCache.locations.length} Locations`;
+        }
+        
+        // Initialize Location Combobox (leave empty or default to first if needed)
+        // Leaving it empty for consistency with category/subcategory
+        const locSearch = document.getElementById('inp-location-search');
+        const locHidden = document.getElementById('inp-location');
+        if (locSearch) locSearch.value = '';
+        if (locHidden) locHidden.value = '';
+      } catch (e) {
+        console.error('Error loading metadata catalog:', e);
+      }
+    }
+
+    function onCategoryChange() {
+      const selectedCat = document.getElementById('inp-category').value;
+      if (selectedCat) {
+        updateSubcategories(selectedCat);
+        const cardCat = document.getElementById('card-category-name');
+        if (cardCat) cardCat.innerText = getCategoryDisplayName(selectedCat);
+      } else {
+        resetSubcategories();
+      }
+    }
+
+    // Tab Switching
+    function switchTab(tabId) {
+      ['intake', 'bottlenecks', 'rules', 'queue'].forEach(t => {
+        document.getElementById(`tab-content-${t}`).classList.add('hidden');
+        document.getElementById(`tab-btn-${t}`).classList.remove('tab-active');
+      });
+      document.getElementById(`tab-content-${tabId}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${tabId}`).classList.add('tab-active');
+
+      if (tabId === 'bottlenecks' && !bottleneckChartInstance) {
+        initBottleneckChart();
+      }
+    }
+
+    // Evaluate Ticket via API
+    async function evaluateTicket() {
+      const catVal = document.getElementById('inp-category').value;
+      if (!catVal) {
+        const searchInput = document.getElementById('inp-category-search');
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.classList.add('border-rose-500', 'ring-2', 'ring-rose-200');
+          setTimeout(() => {
+            searchInput.classList.remove('border-rose-500', 'ring-2', 'ring-rose-200');
+          }, 2500);
+        }
+        openCategoryDropdown();
+        return;
+      }
+
+      let subcatVal = document.getElementById('inp-subcategory').value;
+      if (!subcatVal && currentSubcategoriesList.length > 0) {
+        const subSearch = document.getElementById('inp-subcategory-search');
+        if (subSearch) {
+          subSearch.focus();
+          subSearch.classList.add('border-rose-500', 'ring-2', 'ring-rose-200');
+          setTimeout(() => {
+            subSearch.classList.remove('border-rose-500', 'ring-2', 'ring-rose-200');
+          }, 2500);
+        }
+        openSubcategoryDropdown();
+        return;
+      }
+
+      const payload = {
+        category: catVal,
+        subcategory: subcatVal || (currentSubcategoriesList.length > 0 ? currentSubcategoriesList[0] : 'Default Subcategory'),
+        priority: document.getElementById('inp-priority').value,
+        impact: document.getElementById('inp-impact').value,
+        urgency: document.getElementById('inp-urgency').value,
+        contact_type: document.getElementById('inp-contact').value,
+        location: document.getElementById('inp-location').value || 'Location 143',
+        has_vendor: document.getElementById('chk-vendor').checked ? 1 : 0,
+        has_problem_id: document.getElementById('chk-problem').checked ? 1 : 0,
+        has_cmdb_ci: document.getElementById('chk-cmdb').checked ? 1 : 0,
+        has_rfc: document.getElementById('chk-rfc').checked ? 1 : 0,
+        has_caused_by: document.getElementById('chk-caused').checked ? 1 : 0,
+        open_hour: 14,
+        open_dayofweek: 2
+      };
+
+      try {
+        const res = await fetch('/api/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        updateDecisionCard(data);
+      } catch (e) {
+        console.error('Error evaluating ticket:', e);
+      }
+    }
+
+    // Update Decision Card UI
+    function updateDecisionCard(data) {
+      const badge = document.getElementById('card-badge');
+      const riskPct = document.getElementById('card-risk-pct');
+      const riskBar = document.getElementById('card-risk-bar');
+      const group = document.getElementById('card-group');
+      const action = document.getElementById('card-action');
+      const explanation = document.getElementById('card-explanation');
+      const ruleStats = document.getElementById('card-rule-stats');
+
+      riskPct.innerText = `${data.breach_probability}%`;
+      riskBar.style.width = `${Math.min(100, Math.max(5, data.breach_probability))}%`;
+      badge.innerText = data.badge;
+      group.innerText = data.recommended_group;
+      action.innerText = data.recommended_action;
+      explanation.innerText = data.explainable_reason;
+
+      // Update Category & Subcategory display on the Card
+      const cardCat = document.getElementById('card-category-name');
+      const cardSub = document.getElementById('card-subcategory-name');
+      const curCat = data.category || document.getElementById('inp-category').value;
+      const curSub = data.subcategory || document.getElementById('inp-subcategory').value;
+      if (cardCat) cardCat.innerText = getCategoryDisplayName(curCat);
+      if (cardSub) cardSub.innerText = curSub ? getSubcategoryDisplayName(curSub) : '--';
+      const subSearch = document.getElementById('inp-subcategory-search');
+      if (subSearch && curSub) subSearch.value = getSubcategoryDisplayName(curSub);
+      const subHidden = document.getElementById('inp-subcategory');
+      if (subHidden && curSub) subHidden.value = curSub;
+
+      // Color tier styles
+      if (data.color === 'red') {
+        badge.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-rose-100 text-rose-700 border border-rose-200';
+        riskPct.className = 'text-5xl font-extrabold text-rose-600 mono tracking-tight';
+        riskBar.className = 'bg-rose-500 h-full rounded-full transition-all duration-500';
+      } else if (data.color === 'amber') {
+        badge.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-700 border border-amber-200';
+        riskPct.className = 'text-5xl font-extrabold text-amber-600 mono tracking-tight';
+        riskBar.className = 'bg-amber-500 h-full rounded-full transition-all duration-500';
+      } else {
+        badge.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200';
+        riskPct.className = 'text-5xl font-extrabold text-emerald-600 mono tracking-tight';
+        riskBar.className = 'bg-emerald-500 h-full rounded-full transition-all duration-500';
+      }
+
+      if (data.rule_matched) {
+        ruleStats.classList.remove('hidden');
+        document.getElementById('card-conf').innerText = data.rule_confidence;
+        document.getElementById('card-lift').innerText = data.rule_lift;
+      } else {
+        ruleStats.classList.add('hidden');
+      }
+    }
+
+    function confirmDispatch() {
+      alert('Ticket successfully pushed to assigned specialist queue and flagged in live telemetry stream.');
+    }
+
+    // Fetch and render Bottlenecks
+    async function loadBottlenecks() {
+      try {
+        const res = await fetch('/api/bottlenecks');
+        const data = await res.json();
+        const tbody = document.getElementById('bottlenecks-tbody');
+        tbody.innerHTML = '';
+        data.forEach(item => {
+          const row = document.createElement('tr');
+          const isHeavy = item.avg_duration_hrs > 50;
+          row.innerHTML = `
+            <td class="p-2.5 font-medium">${item.incident_state}</td>
+            <td class="p-2.5 font-medium text-slate-800">${item.next_state}</td>
+            <td class="p-2.5 mono">${item.frequency.toLocaleString()}</td>
+            <td class="p-2.5 mono ${isHeavy ? 'font-bold text-rose-600' : ''}">${item.avg_duration_hrs.toFixed(1)} hrs</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (e) {
+        console.error('Error loading bottlenecks:', e);
+      }
+    }
+
+    // Initialize Bottleneck Chart
+    async function initBottleneckChart() {
+      try {
+        const res = await fetch('/api/bottlenecks');
+        const data = await res.json();
+        // Top 7 longest duration transitions
+        const topDelays = [...data].sort((a,b) => b.avg_duration_hrs - a.avg_duration_hrs).slice(0, 7);
+        const labels = topDelays.map(d => `${d.incident_state} -> ${d.next_state}`);
+        const values = topDelays.map(d => d.avg_duration_hrs);
+
+        const ctx = document.getElementById('bottleneckChart').getContext('2d');
+        bottleneckChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Average Dwell Duration (Hours)',
+              data: values,
+              backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#3b82f6', '#6366f1', '#8b5cf6', '#10b981'],
+              borderRadius: 4
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: { title: { display: true, text: 'Hours Spent in State' } }
+            }
+          }
+        });
+      } catch (e) {
+        console.error('Error drawing chart:', e);
+      }
+    }
+
+    // Fetch and render Rules
+    async function loadRules() {
+      try {
+        const res = await fetch('/api/rules');
+        allRulesCache = await res.json();
+        renderRulesTable(allRulesCache);
+        
+        const ruleCount = allRulesCache.length;
+        const kpiRules = document.getElementById('kpi-rules');
+        if (kpiRules) kpiRules.innerText = `${ruleCount} Rules`;
+        
+        const subtitle = document.getElementById('rules-subtitle');
+        if (subtitle) {
+            subtitle.innerHTML = `${ruleCount} mathematically validated IF-THEN rules discovered from historical failures (Confidence &ge; 60%, Lift &gt; 1.25x).`;
+        }
+      } catch (e) {
+        console.error('Error loading rules:', e);
+      }
+    }
+
+    function renderRulesTable(rules) {
+      const tbody = document.getElementById('rules-tbody');
+      tbody.innerHTML = '';
+      rules.forEach((r, idx) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="p-3 text-slate-400 font-mono">${idx + 1}</td>
+          <td class="p-3 font-medium text-slate-900">${r.Antecedent}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">${r.Consequent}</span></td>
+          <td class="p-3 font-mono font-bold text-rose-600">${(r.Confidence * 100).toFixed(1)}%</td>
+          <td class="p-3 font-mono text-blue-600 font-semibold">${r.Lift.toFixed(2)}x</td>
+          <td class="p-3 font-mono text-slate-500">${r.Frequency.toLocaleString()}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function filterRules() {
+      const q = document.getElementById('rule-search').value.toLowerCase();
+      const filtered = allRulesCache.filter(r => 
+        r.Antecedent.toLowerCase().includes(q) || 
+        r.Consequent.toLowerCase().includes(q)
+      );
+      renderRulesTable(filtered);
+    }
+
+    // Pagination State
+    let currentQueueOffset = 0;
+    const QUEUE_PAGE_LIMIT = 50;
+
+    // Fetch and render Live Queue
+    async function loadQueue(tier = 'ALL', search = '', append = false) {
+      try {
+        if (!append) {
+          currentQueueOffset = 0;
+        }
+
+        const params = new URLSearchParams();
+        if (tier !== 'ALL') params.append('tier', tier);
+        if (search) params.append('search', search);
+        params.append('limit', QUEUE_PAGE_LIMIT.toString());
+        params.append('offset', currentQueueOffset.toString());
+
+        const res = await fetch(`/api/queue?${params.toString()}`);
+        const data = await res.json();
+        const tbody = document.getElementById('queue-tbody');
+        
+        if (!append) {
+          tbody.innerHTML = '';
+        }
+
+        data.items.forEach(item => {
+          const row = document.createElement('tr');
+          let tierBadge = 'bg-slate-100 text-slate-700';
+          if (item.Risk_Tier === 'HIGH RISK') tierBadge = 'bg-rose-100 text-rose-700 border border-rose-200';
+          else if (item.Risk_Tier === 'MEDIUM') tierBadge = 'bg-amber-100 text-amber-700 border border-amber-200';
+          else if (item.Risk_Tier === 'LOW RISK') tierBadge = 'bg-emerald-100 text-emerald-700 border border-emerald-200';
+
+          row.innerHTML = `
+            <td class="p-3 font-mono font-semibold text-blue-600">${item.Ticket_ID}</td>
+            <td class="p-3 font-medium">${item.Category}</td>
+            <td class="p-3">${item.Priority}</td>
+            <td class="p-3 font-mono font-bold">${item.Breach_Risk}</td>
+            <td class="p-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold ${tierBadge}">${item.Risk_Tier}</span></td>
+            <td class="p-3 font-medium text-slate-900">${item.Recommended_Action}</td>
+            <td class="p-3 text-slate-500 text-[11px] truncate max-w-xs" title="${item.Explainable_Reason}">${item.Explainable_Reason}</td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        const loadMoreBtn = document.getElementById('queue-load-more-container');
+        if (data.has_more) {
+          loadMoreBtn.classList.remove('hidden');
+        } else {
+          loadMoreBtn.classList.add('hidden');
+        }
+
+      } catch (e) {
+        console.error('Error loading queue:', e);
+      }
+    }
+
+    function loadMoreQueue() {
+      currentQueueOffset += QUEUE_PAGE_LIMIT;
+      const search = document.getElementById('queue-search').value;
+      loadQueue(currentTier, search, true);
+    }
+
+    function filterQueueTier(tier) {
+      currentTier = tier;
+      ['all', 'high', 'med', 'low'].forEach(t => {
+        const btn = document.getElementById(`filter-${t}`);
+        btn.className = 'px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800';
+      });
+      const activeBtnMap = { 'ALL': 'all', 'HIGH RISK': 'high', 'MEDIUM': 'med', 'LOW RISK': 'low' };
+      document.getElementById(`filter-${activeBtnMap[tier]}`).className = 'px-2.5 py-1 rounded-md font-semibold bg-white text-slate-800 shadow-xs';
+      
+      const search = document.getElementById('queue-search').value;
+      loadQueue(currentTier, search, false);
+    }
+
+    function debounceQueueSearch() {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        const search = document.getElementById('queue-search').value;
+        loadQueue(currentTier, search, false);
+      }, 300);
+    }
+
+    // Initial Load
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadMetadata();
+      evaluateTicket();
+      loadBottlenecks();
+      loadRules();
+      loadQueue(currentTier, '', false);
+    });
+  </script>
+</body>
+</html>

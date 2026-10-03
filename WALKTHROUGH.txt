@@ -1,0 +1,554 @@
+================================================================================
+       SMART IT INCIDENT DECISION SUPPORT SYSTEM - COMPREHENSIVE WALKTHROUGH
+================================================================================
+
+Table of Contents:
+  1. System Overview & Problem Statement
+  2. Architecture & The 6-Phase Pipeline
+  3. Repository Directory Structure
+  4. Prerequisites & System Requirements
+  5. Step-by-Step Environment Setup
+  6. Data File Configuration & Git Protection
+  7. How to Run the System
+     7.1 Running the End-to-End Pipeline (run_pipeline.py)
+     7.2 Running Real-Time Incident Test Cases (test_cases.py)
+     7.3 Running Individual Pipeline Phases Independently
+     7.4 Testing Custom Incoming Tickets
+  8. Output Artifacts & Generated Deliverables (outputs/ folder)
+  9. Operational Decision Support Playbook (Tiers & Actions)
+ 10. Troubleshooting & Frequently Asked Questions (FAQ)
+ 11. Configuration Customization (src/config.py)
+
+
+================================================================================
+1. SYSTEM OVERVIEW & PROBLEM STATEMENT
+================================================================================
+
+In enterprise IT Service Management (ITSM), support organizations face three
+critical operational bottlenecks:
+  - 36.6% SLA Breach Rate: Over a third of support incidents fail to meet their
+    agreed Service Level Agreement resolution deadlines.
+  - Ping-Pong Bouncing: Tickets are passed back and forth between multiple
+    support teams (Level 1 triage -> Network -> Database -> Level 1), multiplying
+    delay and causing customer dissatisfaction.
+  - Waiting Room Traps: Incidents get stuck unnoticed in holding states
+    ('Awaiting User Info', 'Awaiting Vendor') without active escalation.
+
+The Smart IT Incident Decision Support System is an end-to-end data mining and
+machine learning pipeline that transforms raw event logs into actionable,
+real-time intelligence for dispatchers, service desk managers, and engineers.
+
+Key Capabilities:
+  - Early Breach Prediction: Estimates SLA breach probability at intake (t = 0)
+    with strict temporal validation (zero lookahead leakage).
+  - Smart Routing Recommender: Recommends the exact specialist resolving group,
+    bypassing unnecessary intermediate triage hops.
+  - Transparent Root-Cause Rules: Mines human-readable IF-THEN symbolic rules
+    (Support, Confidence, Lift) so every recommendation is fully explainable.
+  - Process Bottleneck Mapping: Quantifies handoffs, ping-pong loops, and dwell
+    time across all support groups.
+
+
+================================================================================
+2. ARCHITECTURE & THE 6-PHASE PIPELINE
+================================================================================
+
+The system is organized into six strictly separated, sequential phases:
+
+[Raw Event Log] (incident_event_log.csv: 141,712 events across 24,918 cases)
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 1: Data Cleaning & Dual-Stream Separation (src/p1_preprocess.py)       │
+│  - Replaces missing indicator values ('?' -> NaN)                            │
+│  - Filters corrupted system state codes (e.g. '-100')                        │
+│  - Creates binary indicators for sparse enterprise items (CMDB CI, RFC, etc.)│
+│  - Parses & chronologically sorts audit update timestamps                    │
+│  - Splits data into:                                                         │
+│     * Stream A: Chronological Event Traces (for process mining)              │
+│     * Stream B: Case Intake Matrix at time t=0 (prevents future leakage)     │
+└──────────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 2: Global Process Mining & Bottlenecks (src/p2_process_mining.py)      │
+│  - Directly-Follows Graph (DFG) state transition frequencies & durations     │
+│  - Ping-pong rework loop detection (Group A -> Group B -> Group A)           │
+│  - Holding state dwell time quantification (Awaiting User, Awaiting Vendor)  │
+│  - Extracts per-ticket trace metrics (handoff count, wait hours, dwell time) │
+└──────────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 3: Case Feature Store, Profiling & Clustering (src/p3_profiling_*.py)  │
+│  - Merges Stream B intake data with Phase 2 process metrics                  │
+│  - Isolation Forest: Identifies top 3% pathological / deviant tickets        │
+│    (CRITICAL: Outliers are AUDITED and RETAINED, never discarded!)           │
+│  - K-Means Clustering: Segments incidents into 3 operational workload types │
+└──────────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 4: Root-Cause Pattern & Association Rules (src/p4_association_*.py)    │
+│  - Discretizes continuous metrics (handoffs, wait time, categories)          │
+│  - Mines high-confidence IF-THEN rules targeting SLA breaches & ping-pong    │
+│  - Generates transparent, human-readable symbolic knowledge for managers     │
+└──────────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 5: Temporal Predictive Modeling (src/p5_predictive_modeling.py)        │
+│  - Strict chronological 80/20 train-test split (older -> train, newer -> test│
+│  - Model 1: Intake SLA Breach Risk Classifier (HistGradientBoosting, ROC-AUC)│
+│  - Model 2: Smart Routing Recommender (Predicts direct resolving group)      │
+│  - Serializes trained pipelines into outputs/trained_models.joblib           │
+└──────────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 6: Operational Decision Support Dashboard (src/p6_decision_support.py) │
+│  - Synthesizes ML probabilities with symbolic root-cause rules               │
+│  - Generates prioritized dispatcher queue (HIGH RISK, MEDIUM, LOW RISK)      │
+│  - Prescribes immediate action (Urgent L1 Bypass, Milestone Alert, Fast-Track│
+│  - Exports live_dispatcher_queue.csv for service desk operations             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+3. REPOSITORY DIRECTORY STRUCTURE
+================================================================================
+
+Smart-IT-Incident-Decision-Support-System/
+│
+├── .gitignore                    # Git configuration ignoring raw data & models
+├── README.md                     # Project summary and introduction
+├── WALKTHROUGH.txt               # This detailed operational & setup guide
+├── requirements.txt              # Python package dependencies
+├── run_pipeline.py               # Master script: Runs Phases 1 through 6
+├── test_cases.py                 # Real-time incident evaluator & test scenarios
+├── DM_pipeline_corrected.html    # Interactive visual architecture document & SVG
+│
+├── incident_event_log.csv        # [DATA FILE] Raw event log (git-ignored)
+│
+├── src/                          # Core source code modules
+│   ├── __init__.py               # Python package marker
+│   ├── config.py                 # File paths, column mappings, & parameters
+│   ├── p1_preprocess.py          # Phase 1: Cleaning & Dual-Stream Separation
+│   ├── p2_process_mining.py      # Phase 2: Process Mining & Bottlenecks
+│   ├── p3_profiling_clustering.py# Phase 3: Feature Store & Anomaly Profiling
+│   ├── p4_association_rules.py   # Phase 4: Root-Cause Association Rules
+│   ├── p5_predictive_modeling.py # Phase 5: GBDT Predictive Modeling
+│   └── p6_decision_support.py    # Phase 6: Dispatcher Queue & Dashboard
+│
+└── outputs/                      # Generated pipeline outputs & saved models
+    ├── .gitkeep                  # Preserves directory in git
+    ├── cleaned_traces.csv        # Cleaned event traces (Stream A)
+    ├── process_bottlenecks.csv   # State transition frequencies and delays
+    ├── enriched_case_features.csv# Unified ticket feature store (Stream B + P2)
+    ├── pathological_outliers.csv # Audited extreme failure incidents
+    ├── root_cause_rules.csv      # Discovered IF-THEN rules with confidence/lift
+    ├── trained_models.joblib     # Serialized trained models & encoders
+    ├── model_evaluation_metrics.txt # ROC-AUC, accuracy, & classification report
+    └── live_dispatcher_queue.csv # Real-time prioritized dispatcher queue
+
+
+================================================================================
+4. PREREQUISITES & SYSTEM REQUIREMENTS
+================================================================================
+
+1. Python Version:
+   - Python 3.8, 3.9, 3.10, 3.11, or 3.12 (Python 3.10+ recommended)
+
+2. Hardware Specifications:
+   - RAM: Minimum 4 GB (8 GB or higher recommended for fast in-memory joins)
+   - CPU: Any modern multi-core processor (Intel Core i3/i5/i7, AMD Ryzen, Apple Silicon)
+   - Disk Space: ~200 MB free space (for dataset + generated intermediate CSVs)
+
+3. Operating System:
+   - Windows 10 / 11
+   - macOS (Intel or Apple Silicon)
+   - Linux (Ubuntu, Debian, CentOS, Fedora, etc.)
+
+
+================================================================================
+5. STEP-BY-STEP ENVIRONMENT SETUP
+================================================================================
+
+Follow these steps to set up an isolated Python virtual environment and
+install all required libraries.
+
+--------------------------------------------------------------------------------
+OPTION A: WINDOWS (PowerShell or Command Prompt)
+--------------------------------------------------------------------------------
+
+1. Open PowerShell or Command Prompt and navigate to the project directory:
+     cd e:\DM\Smart-IT-Incident-Decision-Support-System
+
+2. Create a virtual environment named 'venv':
+     python -m venv venv
+
+3. Activate the virtual environment:
+   - In PowerShell:
+       .\venv\Scripts\Activate.ps1
+
+     NOTE: If PowerShell blocks script execution with an ExecutionPolicy error,
+     run this command once in your PowerShell window:
+       Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+     and then re-run:
+       .\venv\Scripts\Activate.ps1
+
+   - In Command Prompt (CMD):
+       .\venv\Scripts\activate.bat
+
+4. Upgrade pip:
+     python -m pip install --upgrade pip
+
+5. Install required packages:
+     pip install -r requirements.txt
+
+   (Alternatively, install directly):
+     pip install pandas numpy scikit-learn joblib
+
+--------------------------------------------------------------------------------
+OPTION B: LINUX / MACOS (Terminal / Bash / Zsh)
+--------------------------------------------------------------------------------
+
+1. Open Terminal and navigate to the project directory:
+     cd /path/to/Smart-IT-Incident-Decision-Support-System
+
+2. Create a virtual environment named 'venv':
+     python3 -m venv venv
+
+3. Activate the virtual environment:
+     source venv/bin/activate
+
+4. Upgrade pip:
+     pip install --upgrade pip
+
+5. Install required packages:
+     pip install -r requirements.txt
+
+
+================================================================================
+6. DATA FILE CONFIGURATION & GIT PROTECTION
+================================================================================
+
+Primary Dataset:
+  - File Name: incident_event_log.csv
+  - Location: Must reside directly in the root of the project directory:
+              e:\DM\Smart-IT-Incident-Decision-Support-System\incident_event_log.csv
+  - Rows: ~141,712 audit updates
+  - Cases: ~24,918 unique IT support incidents
+  - Source: ServiceNow Incident Management Event Log benchmark
+
+Git Protection (.gitignore):
+  The dataset file is approximately 44 MB. Pushing large data files into Git
+  repositories degrades performance and can violate data compliance rules.
+  
+  A .gitignore file is configured at the root of the repository to ensure:
+    * incident_event_log.csv is NEVER committed to git.
+    * All raw and generated data files (*.csv, *.parquet, *.joblib) are ignored.
+    * Python cache files (__pycache__/) and virtual environments (venv/) are ignored.
+    * The outputs/ folder structure is tracked via outputs/.gitkeep.
+
+  To verify git protection at any time:
+    git status
+  (Confirm that incident_event_log.csv is NOT listed under untracked files).
+
+
+================================================================================
+7. HOW TO RUN THE SYSTEM
+================================================================================
+
+--------------------------------------------------------------------------------
+7.1 RUNNING THE END-TO-END PIPELINE (run_pipeline.py)
+--------------------------------------------------------------------------------
+
+To run all six phases sequentially from raw data ingestion to the final
+dispatcher dashboard, execute:
+
+    python run_pipeline.py
+
+What happens during execution:
+  1. Phase 1 ingests incident_event_log.csv, cleans missing values, builds
+     Stream A (cleaned_traces.csv) and Stream B intake matrix. (~12-18s)
+  2. Phase 2 discovers state transitions, calculates ping-pong rework loops,
+     and computes idle wait hours per case. (~2-4s)
+  3. Phase 3 merges features, runs Isolation Forest to profile pathological
+     incidents, and runs K-Means workload clustering. (~3-6s)
+  4. Phase 4 discretizes metrics and mines high-confidence IF-THEN root-cause
+     association rules. (~1-2s)
+  5. Phase 5 enforces a strict chronological 80/20 split, trains the SLA
+     breach risk classifier and smart routing recommender, evaluates ROC-AUC,
+     and serializes outputs/trained_models.joblib. (~4-8s)
+  6. Phase 6 synthesizes predictions and rules to build the operational queue
+     outputs/live_dispatcher_queue.csv and displays a sample dashboard. (~1-2s)
+
+Expected Duration:
+  Approximately 30 to 45 seconds total on a standard laptop or desktop.
+
+Output Confirmation:
+  Upon completion, the script prints a table of all generated artifacts in
+  the outputs/ directory with their respective file sizes.
+
+--------------------------------------------------------------------------------
+7.2 RUNNING REAL-TIME INCIDENT TEST CASES (test_cases.py)
+--------------------------------------------------------------------------------
+
+To simulate real-time decision support on specific incoming incident scenarios
+without re-running the full pipeline:
+
+    python test_cases.py
+
+This script loads the trained model weights (outputs/trained_models.joblib) and
+evaluates four realistic production test cases:
+
+  - Test Case #1: Critical Production Database Outage
+    * Attributes: Category 19, Priority 1 - Critical, CMDB CI linked, Problem ID linked
+    * System Output: ~87% Breach Risk -> [CRITICAL ALERT] HIGH RISK
+    * Recommended Action: URGENT: Bypass Level 1 Triage -> Dispatch Directly to Group 28
+    * Root Cause: Historical risk pattern for Category 19 with Critical priority.
+
+  - Test Case #2: Routine Employee Password Reset
+    * Attributes: Category 53, Priority 3 - Moderate, Self-service intake
+    * System Output: ~27% Breach Risk -> [NORMAL WORKLOAD] LOW RISK
+    * Recommended Action: STANDARD: Route to Group 24 (Eligible for auto-self-heal)
+    * Root Cause: Matches Rule: IF {Cat 53 & Wait > 24h} => Breach (low risk initially).
+
+  - Test Case #3: External Vendor Network Gateway Incident
+    * Attributes: Category 42, Priority 2 - High, External vendor dependency
+    * System Output: ~98% Breach Risk -> [CRITICAL ALERT] HIGH RISK
+    * Recommended Action: URGENT: Dispatch Directly to Group 39
+    * Root Cause: High failure co-occurrence with vendor delays.
+
+  - Test Case #4: Real Unseen Production Ticket
+    * Evaluates a real future ticket directly from the unseen test evaluation set.
+
+--------------------------------------------------------------------------------
+7.3 RUNNING INDIVIDUAL PIPELINE PHASES INDEPENDENTLY
+--------------------------------------------------------------------------------
+
+Each phase module in src/ can be executed independently for development,
+unit-testing, or debugging:
+
+  - Run Phase 1 only (Data Preprocessing):
+      python -c "from src.p1_preprocess import run_phase1; run_phase1()"
+
+  - Run Phase 2 only (Process Mining):
+      python -c "from src.p2_process_mining import run_phase2; run_phase2()"
+
+  - Run Phase 3 only (Clustering & Anomaly Profiling):
+      python src/p3_profiling_clustering.py
+
+  - Run Phase 4 only (Association Rules):
+      python src/p4_association_rules.py
+
+  - Run Phase 5 only (Model Training):
+      python src/p5_predictive_modeling.py
+
+  - Run Phase 6 only (Dispatcher Queue):
+      python src/p6_decision_support.py
+
+--------------------------------------------------------------------------------
+7.4 TESTING CUSTOM INCOMING TICKETS
+--------------------------------------------------------------------------------
+
+You can score any new custom incident by importing predict_single_ticket in
+Python:
+
+```python
+import joblib
+import pandas as pd
+from test_cases.py import predict_single_ticket
+
+# Load models and rules
+artifacts = joblib.load("outputs/trained_models.joblib")
+rules_df = pd.read_csv("outputs/root_cause_rules.csv")
+
+# Define ticket attributes at intake (time t = 0)
+my_ticket = {
+    "category": "Category 42",
+    "subcategory": "Subcategory 224",
+    "priority": "1 - Critical",
+    "impact": "1 - High",
+    "urgency": "1 - High",
+    "contact_type": "Phone",
+    "location": "Location 108",
+    "has_cmdb_ci": 1,
+    "has_problem_id": 0,
+    "has_rfc": 0,
+    "has_vendor": 1,
+    "has_caused_by": 0,
+    "open_hour": 14,
+    "open_dayofweek": 2,
+}
+
+result = predict_single_ticket(my_ticket, artifacts, rules_df)
+print("Breach Probability :", result["Breach_Probability"])
+print("Risk Tier          :", result["Risk_Tier"])
+print("Recommended Group  :", result["Recommended_Group"])
+print("Recommended Action :", result["Recommended_Action"])
+print("Explainable Reason :", result["Explainable_Reason"])
+```
+
+
+================================================================================
+8. OUTPUT ARTIFACTS & GENERATED DELIVERABLES (outputs/ folder)
+================================================================================
+
+When the pipeline executes, the following files are produced in the outputs/
+directory:
+
+1. cleaned_traces.csv (~8.2 MB)
+   - Chronologically ordered audit events per incident case.
+   - Columns: number, sys_updated_at, incident_state, assignment_group, assigned_to.
+   - Used for process discovery and trajectory mining.
+
+2. process_bottlenecks.csv (~2.2 KB)
+   - Directly-Follows Graph (DFG) transition matrix.
+   - Shows transition frequencies and average dwell time (in hours) between
+     every state pair (e.g., Active -> Awaiting User Info, 42.1 hours).
+
+3. enriched_case_features.csv (~5.0 MB)
+   - Master feature store integrating intake features with process metrics.
+   - Contains 1 row per ticket with handoff count, ping-pong flag, waiting
+     hours, anomaly label, and workload cluster assignment.
+
+4. pathological_outliers.csv (~157 KB)
+   - Audited incidents flagged by Isolation Forest as exhibiting extreme
+     delay, excessive handoffs, or severe ping-pong rework.
+   - Allows IT managers to perform post-mortem investigations on process failures.
+
+5. root_cause_rules.csv (~2.2 KB)
+   - High-confidence association rules.
+   - Columns: Antecedent, Consequent, Support, Confidence, Lift, Frequency.
+   - Example: IF {Cat: Category 42 AND Wait: High (>24h)} => SLA Breach (83% Conf, 2.26x Lift).
+
+6. trained_models.joblib (~2.5 MB)
+   - Serialized Python dictionary containing:
+     * clf_breach: Trained HistGradientBoostingClassifier for SLA breach prediction.
+     * clf_route: Trained HistGradientBoostingClassifier for group recommendation.
+     * encoder: OrdinalEncoder for ticket intake categorical features.
+     * group_encoder: OrdinalEncoder for target assignment groups.
+     * Feature column specifications.
+
+7. model_evaluation_metrics.txt (~720 B)
+   - Out-of-sample performance report on the 4,984 unseen test tickets:
+     * Validation Strategy: Chronological Temporal Split (80% Train / 20% Test)
+     * SLA Breach ROC-AUC: ~0.76
+     * Precision / Recall / F1-Scores for Met vs. Breached SLA
+     * Smart Routing Accuracy: ~75.7% direct first-touch resolution group match.
+
+8. live_dispatcher_queue.csv (~773 KB)
+   - Prioritized operational queue for service desk dispatchers.
+   - Columns: Ticket_ID, Category, Priority, Breach_Risk, Risk_Tier,
+     Recommended_Action, Explainable_Reason.
+
+
+================================================================================
+9. OPERATIONAL DECISION SUPPORT PLAYBOOK
+================================================================================
+
+The decision engine assigns every incoming incident to an operational tier:
+
+--------------------------------------------------------------------------------
+TIER 1: HIGH RISK (Predicted Breach Probability >= 70%)
+--------------------------------------------------------------------------------
+  - Badge: [CRITICAL ALERT]
+  - Meaning: Incident exhibits historical attributes strongly correlated with
+    SLA failures, vendor delays, or severe rework.
+  - Recommended Action:
+    "URGENT: Bypass Level 1 Triage -> Dispatch Directly to [Recommended Group]"
+  - Expected Impact: Eliminates 1 to 3 intermediate triage hops, saving 12 to 48
+    hours of idle queue time before the specialist begins investigation.
+
+--------------------------------------------------------------------------------
+TIER 2: MEDIUM RISK (Predicted Breach Probability: 40% to 69%)
+--------------------------------------------------------------------------------
+  - Badge: [ELEVATED RISK]
+  - Meaning: Incident has moderate complexity; susceptible to breaching if
+    idle wait time exceeds 24 hours.
+  - Recommended Action:
+    "MONITOR: Route to [Recommended Group] with proactive 24h milestone reminder"
+  - Expected Impact: Alerts team lead if ticket sits unassigned or inactive for
+    more than 24 hours, preventing silent SLA breaches.
+
+--------------------------------------------------------------------------------
+TIER 3: LOW RISK (Predicted Breach Probability < 40%)
+--------------------------------------------------------------------------------
+  - Badge: [NORMAL WORKLOAD]
+  - Meaning: Standard, high-volume, low-complexity ticket (e.g., password reset,
+    standard access request).
+  - Recommended Action:
+    "STANDARD: Route to [Recommended Group] (Eligible for auto self-heal / Fast-Track)"
+  - Expected Impact: Diverts routine workload away from senior specialists and
+    enables automated resolution workflows.
+
+
+================================================================================
+10. TROUBLESHOOTING & FREQUENTLY ASKED QUESTIONS (FAQ)
+================================================================================
+
+Q1: "FileNotFoundError: incident_event_log.csv not found"
+A1: Ensure the dataset file 'incident_event_log.csv' is placed directly in the
+    root project folder (e:\DM\Smart-IT-Incident-Decision-Support-System\).
+    Do not place it inside the src/ or outputs/ folder.
+
+Q2: "Error: trained_models.joblib not found when running test_cases.py"
+A2: test_cases.py requires the models to be trained first. Run the master pipeline
+    once:
+      python run_pipeline.py
+    After it finishes, run:
+      python test_cases.py
+
+Q3: "ModuleNotFoundError: No module named 'src'"
+A3: Always run commands from the project root directory where run_pipeline.py
+    and src/ are located:
+      cd e:\DM\Smart-IT-Incident-Decision-Support-System
+      python run_pipeline.py
+    Do not run commands from inside the src/ folder.
+
+Q4: "ExecutionPolicy error in Windows PowerShell when activating venv"
+A4: Run this command in PowerShell:
+      Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+    Then retry:
+      .\venv\Scripts\Activate.ps1
+
+Q5: "MemoryError during data loading"
+A5: The raw dataset is ~44 MB and easily fits in 4 GB RAM. If running in a
+    resource-constrained container or virtual machine, ensure at least 2 GB of
+    available free memory before launching run_pipeline.py.
+
+Q6: "Why are outliers kept in Phase 3 instead of deleted?"
+A6: In IT incident management, pathological outliers (tickets that took weeks or
+    experienced 15 handoffs) are NOT data entry errors—they are the most severe
+    process breakdowns. Removing them would cause survival bias and prevent the
+    system from learning how to prevent extreme SLA failures.
+
+
+================================================================================
+11. CONFIGURATION CUSTOMIZATION (src/config.py)
+================================================================================
+
+All key parameters can be adjusted in src/config.py without modifying phase code:
+
+  - TEMPORAL_SPLIT_RATIO (Default: 0.80)
+    Fraction of chronological tickets used for training (80% train / 20% test).
+
+  - OUTLIER_CONTAMINATION (Default: 0.03)
+    Percentage of most deviant tickets flagged by Isolation Forest (top 3%).
+
+  - RANDOM_STATE (Default: 42)
+    Ensures 100% deterministic, reproducible clustering and model training.
+
+  - INTAKE_CATEGORICAL
+    List of features guaranteed to be available at ticket creation time t = 0:
+    ['category', 'subcategory', 'contact_type', 'location', 'impact', 'urgency', 'priority']
+
+  - SPARSE_COLS
+    Sparse enterprise indicator columns converted to binary presence flags:
+    ['cmdb_ci', 'problem_id', 'rfc', 'vendor', 'caused_by']
+
+================================================================================
+                         END OF WALKTHROUGH DOCUMENT
+================================================================================
